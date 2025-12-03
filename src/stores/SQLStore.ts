@@ -10,7 +10,7 @@
 // - Requires database connection
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType } from '../types/index.js';
+import type { CTCId, CTCType, CTCData } from '../types/index.js';
 
 export interface SQLStoreConfig extends BaseStoreConfig {
   /** Database connection string */
@@ -44,7 +44,7 @@ export class SQLStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async create(_type: CTCType, _data: unknown): Promise<StoredCTC> {
+  async create(_type: CTCType, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement create
     // - INSERT into constructs table
     // - Return created row
@@ -58,7 +58,7 @@ export class SQLStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async update(_id: CTCId, _data: unknown): Promise<StoredCTC> {
+  async update(_id: CTCId, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement update
     // - UPDATE by ID
     // - Return updated row

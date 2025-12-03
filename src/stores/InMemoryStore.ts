@@ -1,79 +1,86 @@
-// TODO: Implement InMemoryStore
-//
 // An in-memory implementation of the Store interface.
 // Useful for testing, prototyping, and temporary storage.
-//
-// Characteristics:
-// - Fast read/write operations
-// - No persistence (data lost on restart)
-// - Good for unit tests and local development
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType } from '../types/index.js';
+import type { CTCId, CTCType, CTCData } from '../types/index.js';
 
 export interface InMemoryStoreConfig extends BaseStoreConfig {
-  // TODO: Add in-memory specific configuration options
+  name?: string;
 }
 
 export class InMemoryStore implements Store {
   readonly id: string;
+  readonly name: string;
   private constructs: Map<CTCId, StoredCTC> = new Map();
 
-  constructor(config?: InMemoryStoreConfig) {
-    this.id = config?.id ?? crypto.randomUUID();
+  constructor(name?: string | InMemoryStoreConfig) {
+    if (typeof name === 'string') {
+      this.id = crypto.randomUUID();
+      this.name = name;
+    } else {
+      this.id = name?.id ?? crypto.randomUUID();
+      this.name = name?.name ?? 'unnamed';
+    }
   }
 
   async connect(): Promise<void> {
-    // TODO: Implement connection (no-op for in-memory)
+    // No-op for in-memory store
   }
 
   async disconnect(): Promise<void> {
-    // TODO: Implement disconnection (clear data?)
+    this.constructs.clear();
   }
 
-  async create(_type: CTCType, _data: unknown): Promise<StoredCTC> {
-    // TODO: Implement create
-    // - Generate unique ID
-    // - Create StoredCTC with timestamps
-    // - Store in map
-    // - Return created construct
-    throw new Error('Not implemented');
+  async create(type: CTCType, data: CTCData): Promise<StoredCTC> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+
+    const stored: StoredCTC = {
+      id,
+      type,
+      data,
+      storeId: this.id,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.constructs.set(id, stored);
+    return stored;
   }
 
   async read(id: CTCId): Promise<StoredCTC | undefined> {
-    // TODO: Implement read
-    // - Look up in map
-    // - Return construct or undefined
-    throw new Error('Not implemented');
+    return this.constructs.get(id);
   }
 
-  async update(_id: CTCId, _data: unknown): Promise<StoredCTC> {
-    // TODO: Implement update
-    // - Find existing construct
-    // - Update data and timestamp
-    // - Return updated construct
-    throw new Error('Not implemented');
+  async update(id: CTCId, data: CTCData): Promise<StoredCTC> {
+    const existing = this.constructs.get(id);
+    if (!existing) {
+      throw new Error(`Construct not found: ${id}`);
+    }
+
+    const updated: StoredCTC = {
+      ...existing,
+      data,
+      updatedAt: new Date(),
+    };
+
+    this.constructs.set(id, updated);
+    return updated;
   }
 
-  async delete(_id: CTCId): Promise<boolean> {
-    // TODO: Implement delete
-    // - Remove from map
-    // - Return success/failure
-    throw new Error('Not implemented');
+  async delete(id: CTCId): Promise<boolean> {
+    return this.constructs.delete(id);
   }
 
-  async list(_type: CTCType): Promise<StoredCTC[]> {
-    // TODO: Implement list
-    // - Filter constructs by type
-    // - Return array
-    throw new Error('Not implemented');
+  async list(type: CTCType): Promise<StoredCTC[]> {
+    return Array.from(this.constructs.values()).filter(c => c.type === type);
   }
 
-  async search(_query: StoreQuery): Promise<StoredCTC[]> {
-    // TODO: Implement search
-    // - Apply query filters
-    // - Return matching constructs
-    throw new Error('Not implemented');
+  async search(query: StoreQuery): Promise<StoredCTC[]> {
+    let results = Array.from(this.constructs.values());
+    if (query.type) {
+      results = results.filter(c => c.type === query.type);
+    }
+    return results;
   }
 }
-

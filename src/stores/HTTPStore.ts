@@ -9,7 +9,7 @@
 // - Requires network connectivity
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType } from '../types/index.js';
+import type { CTCId, CTCType, CTCData } from '../types/index.js';
 
 export interface HTTPStoreConfig extends BaseStoreConfig {
   /** Base URL of the remote store API */
@@ -44,7 +44,7 @@ export class HTTPStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async create(_type: CTCType, _data: unknown): Promise<StoredCTC> {
+  async create(_type: CTCType, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement create
     // - POST to remote API
     // - Parse and return response
@@ -58,7 +58,7 @@ export class HTTPStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async update(_id: CTCId, _data: unknown): Promise<StoredCTC> {
+  async update(_id: CTCId, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement update
     // - PUT/PATCH to remote API
     // - Parse and return response

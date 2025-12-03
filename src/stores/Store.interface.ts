@@ -1,15 +1,10 @@
-// TODO: Define Store interface
+// Store interface for CTKR storage backends.
 //
 // The Store interface defines the contract that all store implementations must follow.
 // This enables CTKR to work with different storage backends (in-memory, disk, HTTP, SQL)
 // while maintaining a consistent API.
-//
-// Key operations:
-// - CRUD for category-theoretic constructs
-// - Query/search capabilities
-// - Metadata access
 
-import type { CTCId, CTCType, StoreConfig } from '../types/index.js';
+import type { CTCId, CTCType, StoreConfig, CTCData } from '../types/index.js';
 
 /**
  * Represents a stored category-theoretic construct.
@@ -17,7 +12,8 @@ import type { CTCId, CTCType, StoreConfig } from '../types/index.js';
 export interface StoredCTC {
   id: CTCId;
   type: CTCType;
-  data: unknown;
+  data: CTCData;
+  storeId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,7 +43,7 @@ export interface Store {
    * @param data - The construct data
    * @returns The created construct
    */
-  create(type: CTCType, data: unknown): Promise<StoredCTC>;
+  create(type: CTCType, data: CTCData): Promise<StoredCTC>;
 
   /**
    * Read a construct by ID.
@@ -62,7 +58,7 @@ export interface Store {
    * @param data - The new construct data
    * @returns The updated construct
    */
-  update(id: CTCId, data: unknown): Promise<StoredCTC>;
+  update(id: CTCId, data: CTCData): Promise<StoredCTC>;
 
   /**
    * Delete a construct.
@@ -100,4 +96,3 @@ export interface StoreQuery {
 export interface BaseStoreConfig extends StoreConfig {
   id?: string;
 }
-

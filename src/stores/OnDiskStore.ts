@@ -9,7 +9,7 @@
 // - No concurrent access handling (use SQLStore for that)
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType } from '../types/index.js';
+import type { CTCId, CTCType, CTCData } from '../types/index.js';
 
 export interface OnDiskStoreConfig extends BaseStoreConfig {
   /** Directory path where data will be stored */
@@ -39,7 +39,7 @@ export class OnDiskStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async create(_type: CTCType, _data: unknown): Promise<StoredCTC> {
+  async create(_type: CTCType, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement create
     // - Generate unique ID
     // - Write construct to file
@@ -54,7 +54,7 @@ export class OnDiskStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async update(_id: CTCId, _data: unknown): Promise<StoredCTC> {
+  async update(_id: CTCId, _data: CTCData): Promise<StoredCTC> {
     // TODO: Implement update
     // - Read existing construct
     // - Update and write back
