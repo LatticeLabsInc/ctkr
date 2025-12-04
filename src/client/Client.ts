@@ -1,7 +1,8 @@
 // CTKR Client - main entry point for interacting with CTKR.
 
 import type { Store, StoredCTC } from '../stores/Store.interface.js';
-import type { ClientConfig, StoreId, CTCType, CTCId, CTCData } from '../types/index.js';
+import type { ClientConfig, StoreId, CTCType, CTCData } from '../types/index.js';
+import type { SignatureId } from '../constructs/Signature.js';
 
 export class Client {
   private stores: Map<StoreId, Store> = new Map();
@@ -42,7 +43,7 @@ export class Client {
    * @param type - The type of construct to create
    * @param data - The construct data (null for Objects, {from, to} for Morphisms, etc.)
    * @param store - The store to create the construct in
-   * @returns The created construct
+   * @returns The created construct with its signature
    */
   async createCTC(type: CTCType, data: CTCData, store: Store): Promise<StoredCTC> {
     if (!this.stores.has(store.id)) {
@@ -52,12 +53,12 @@ export class Client {
   }
 
   /**
-   * Get a construct by ID.
+   * Get a construct by signature ID.
    * Searches across all attached stores.
-   * @param id - The ID of the construct to find
+   * @param id - The signature ID of the construct to find
    * @returns The construct, or undefined if not found
    */
-  async getCTC(id: CTCId): Promise<StoredCTC | undefined> {
+  async getCTC(id: SignatureId): Promise<StoredCTC | undefined> {
     for (const store of this.stores.values()) {
       const result = await store.read(id);
       if (result) {
@@ -65,6 +66,33 @@ export class Client {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Update a construct by signature ID.
+   * @param id - The signature ID
+   * @param data - The new data
+   * @param store - The store containing the construct
+   * @returns The updated construct with incremented version
+   */
+  async updateCTC(id: SignatureId, data: CTCData, store: Store): Promise<StoredCTC> {
+    if (!this.stores.has(store.id)) {
+      throw new Error(`Store not attached: ${store.id}`);
+    }
+    return store.update(id, data);
+  }
+
+  /**
+   * Delete a construct by signature ID.
+   * @param id - The signature ID
+   * @param store - The store containing the construct
+   * @returns True if deleted, false if not found
+   */
+  async deleteCTC(id: SignatureId, store: Store): Promise<boolean> {
+    if (!this.stores.has(store.id)) {
+      throw new Error(`Store not attached: ${store.id}`);
+    }
+    return store.delete(id);
   }
 
   /**

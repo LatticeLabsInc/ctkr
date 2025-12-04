@@ -4,17 +4,26 @@
 // This enables CTKR to work with different storage backends (in-memory, disk, HTTP, SQL)
 // while maintaining a consistent API.
 
-import type { CTCId, CTCType, StoreConfig, CTCData } from '../types/index.js';
+import type { CTCType, CTCData } from '../types/index.js';
+import type { Signature, SignatureId } from '../constructs/Signature.js';
 
 /**
  * Represents a stored category-theoretic construct.
  */
 export interface StoredCTC {
-  id: CTCId;
+  /** Unique signature for this construct */
+  signature: Signature;
+  
+  /** Type of construct (Object, Morphism, Category, Functor) */
   type: CTCType;
+  
+  /** Construct-specific data */
   data: CTCData;
-  storeId: string;
+  
+  /** Creation timestamp */
   createdAt: Date;
+  
+  /** Last update timestamp */
   updatedAt: Date;
 }
 
@@ -41,31 +50,31 @@ export interface Store {
    * Create a new construct in the store.
    * @param type - The type of construct to create
    * @param data - The construct data
-   * @returns The created construct
+   * @returns The created construct with its signature
    */
   create(type: CTCType, data: CTCData): Promise<StoredCTC>;
 
   /**
-   * Read a construct by ID.
-   * @param id - The construct ID
+   * Read a construct by signature ID.
+   * @param id - The signature ID
    * @returns The construct, or undefined if not found
    */
-  read(id: CTCId): Promise<StoredCTC | undefined>;
+  read(id: SignatureId): Promise<StoredCTC | undefined>;
 
   /**
    * Update an existing construct.
-   * @param id - The construct ID
+   * @param id - The signature ID
    * @param data - The new construct data
-   * @returns The updated construct
+   * @returns The updated construct with incremented version
    */
-  update(id: CTCId, data: CTCData): Promise<StoredCTC>;
+  update(id: SignatureId, data: CTCData): Promise<StoredCTC>;
 
   /**
    * Delete a construct.
-   * @param id - The construct ID
+   * @param id - The signature ID
    * @returns True if deleted, false if not found
    */
-  delete(id: CTCId): Promise<boolean>;
+  delete(id: SignatureId): Promise<boolean>;
 
   /**
    * List all constructs of a given type.
@@ -93,6 +102,6 @@ export interface StoreQuery {
 /**
  * Base configuration for all store types.
  */
-export interface BaseStoreConfig extends StoreConfig {
+export interface BaseStoreConfig {
   id?: string;
 }

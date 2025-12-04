@@ -2,7 +2,9 @@
 // Useful for testing, prototyping, and temporary storage.
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType, CTCData } from '../types/index.js';
+import type { CTCType, CTCData } from '../types/index.js';
+import type { SignatureId } from '../constructs/Signature.js';
+import { createSignature, incrementVersion } from '../constructs/Signature.js';
 
 export interface InMemoryStoreConfig extends BaseStoreConfig {
   name?: string;
@@ -11,7 +13,7 @@ export interface InMemoryStoreConfig extends BaseStoreConfig {
 export class InMemoryStore implements Store {
   readonly id: string;
   readonly name: string;
-  private constructs: Map<CTCId, StoredCTC> = new Map();
+  private constructs: Map<SignatureId, StoredCTC> = new Map();
 
   constructor(name?: string | InMemoryStoreConfig) {
     if (typeof name === 'string') {
@@ -32,27 +34,26 @@ export class InMemoryStore implements Store {
   }
 
   async create(type: CTCType, data: CTCData): Promise<StoredCTC> {
-    const id = crypto.randomUUID();
+    const signature = createSignature(this.id);
     const now = new Date();
 
     const stored: StoredCTC = {
-      id,
+      signature,
       type,
       data,
-      storeId: this.id,
       createdAt: now,
       updatedAt: now,
     };
 
-    this.constructs.set(id, stored);
+    this.constructs.set(signature.id, stored);
     return stored;
   }
 
-  async read(id: CTCId): Promise<StoredCTC | undefined> {
+  async read(id: SignatureId): Promise<StoredCTC | undefined> {
     return this.constructs.get(id);
   }
 
-  async update(id: CTCId, data: CTCData): Promise<StoredCTC> {
+  async update(id: SignatureId, data: CTCData): Promise<StoredCTC> {
     const existing = this.constructs.get(id);
     if (!existing) {
       throw new Error(`Construct not found: ${id}`);
@@ -60,6 +61,7 @@ export class InMemoryStore implements Store {
 
     const updated: StoredCTC = {
       ...existing,
+      signature: incrementVersion(existing.signature),
       data,
       updatedAt: new Date(),
     };
@@ -68,7 +70,7 @@ export class InMemoryStore implements Store {
     return updated;
   }
 
-  async delete(id: CTCId): Promise<boolean> {
+  async delete(id: SignatureId): Promise<boolean> {
     return this.constructs.delete(id);
   }
 

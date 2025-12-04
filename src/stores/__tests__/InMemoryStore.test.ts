@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryStore } from '../InMemoryStore.js';
-import { ObjectType, MorphismType } from '../../types/index.js';
 
 describe('InMemoryStore', () => {
   let store: InMemoryStore;
@@ -47,10 +46,12 @@ describe('InMemoryStore', () => {
     it('creates an Object with null data', async () => {
       const obj = await store.create('Object', null);
       
-      expect(obj.id).toBeDefined();
+      expect(obj.signature).toBeDefined();
+      expect(obj.signature.id).toBeDefined();
+      expect(obj.signature.storeId).toBe(store.id);
+      expect(obj.signature.version).toBe(1);
       expect(obj.type).toBe('Object');
       expect(obj.data).toBeNull();
-      expect(obj.storeId).toBe(store.id);
       expect(obj.createdAt).toBeInstanceOf(Date);
       expect(obj.updatedAt).toBeInstanceOf(Date);
     });
@@ -68,17 +69,17 @@ describe('InMemoryStore', () => {
       const obj1 = await store.create('Object', null);
       const obj2 = await store.create('Object', null);
       
-      expect(obj1.id).not.toBe(obj2.id);
+      expect(obj1.signature.id).not.toBe(obj2.signature.id);
     });
   });
 
   describe('read', () => {
-    it('reads an existing construct by ID', async () => {
+    it('reads an existing construct by signature ID', async () => {
       const created = await store.create('Object', { name: 'test-obj' });
-      const read = await store.read(created.id);
+      const read = await store.read(created.signature.id);
 
       expect(read).toBeDefined();
-      expect(read?.id).toBe(created.id);
+      expect(read?.signature.id).toBe(created.signature.id);
       expect(read?.data).toEqual({ name: 'test-obj' });
     });
 
@@ -89,11 +90,12 @@ describe('InMemoryStore', () => {
   });
 
   describe('update', () => {
-    it('updates an existing construct', async () => {
+    it('updates an existing construct and increments version', async () => {
       const created = await store.create('Object', { name: 'original' });
-      const updated = await store.update(created.id, { name: 'updated' });
+      const updated = await store.update(created.signature.id, { name: 'updated' });
 
-      expect(updated.id).toBe(created.id);
+      expect(updated.signature.id).toBe(created.signature.id);
+      expect(updated.signature.version).toBe(2);
       expect(updated.data).toEqual({ name: 'updated' });
       expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
     });
@@ -107,10 +109,10 @@ describe('InMemoryStore', () => {
   describe('delete', () => {
     it('deletes an existing construct', async () => {
       const created = await store.create('Object', null);
-      const deleted = await store.delete(created.id);
+      const deleted = await store.delete(created.signature.id);
       
       expect(deleted).toBe(true);
-      expect(await store.read(created.id)).toBeUndefined();
+      expect(await store.read(created.signature.id)).toBeUndefined();
     });
 
     it('returns false for non-existent ID', async () => {
@@ -123,7 +125,7 @@ describe('InMemoryStore', () => {
     it('returns all constructs of a given type', async () => {
       await store.create('Object', null);
       await store.create('Object', null);
-      await store.create('Morphism', { from: { id: 'a' }, to: { id: 'b' } });
+      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
       const objects = await store.list('Object');
       const morphisms = await store.list('Morphism');
@@ -142,7 +144,7 @@ describe('InMemoryStore', () => {
   describe('search', () => {
     it('returns all constructs when query is empty', async () => {
       await store.create('Object', null);
-      await store.create('Morphism', { from: { id: 'a' }, to: { id: 'b' } });
+      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
       const results = await store.search({});
       expect(results).toHaveLength(2);
@@ -150,7 +152,7 @@ describe('InMemoryStore', () => {
 
     it('filters by type when specified', async () => {
       await store.create('Object', null);
-      await store.create('Morphism', { from: { id: 'a' }, to: { id: 'b' } });
+      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
       const results = await store.search({ type: 'Object' });
       expect(results).toHaveLength(1);

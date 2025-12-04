@@ -1,7 +1,5 @@
 // Core CTKR types
 
-export type CTCId = string;
-
 export type CTCType = 'Object' | 'Morphism' | 'Category' | 'Functor';
 
 // Type constants for use in createCTC calls
@@ -16,19 +14,17 @@ export interface ClientConfig {
   // TODO: Define client configuration options
 }
 
-export interface StoreConfig {
-  // TODO: Define store configuration options
-}
-
 // Data types for construct creation
 export interface ObjectData {
   name?: string;
+  categoryId?: string;
   metadata?: Record<string, unknown>;
 }
 
 export interface MorphismData {
-  from: { id: CTCId };
-  to: { id: CTCId };
+  from: { signature: { id: string } };
+  to: { signature: { id: string } };
+  categoryId?: string;
   name?: string;
   metadata?: Record<string, unknown>;
 }
@@ -39,8 +35,8 @@ export interface CategoryData {
 }
 
 export interface FunctorData {
-  source: { id: CTCId };
-  target: { id: CTCId };
+  source: { signature: { id: string } };
+  target: { signature: { id: string } };
   name?: string;
   metadata?: Record<string, unknown>;
 }

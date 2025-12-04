@@ -2,15 +2,10 @@
 //
 // A SQL database implementation of the Store interface.
 // Uses a relational database for persistent, concurrent storage.
-//
-// Characteristics:
-// - ACID-compliant persistence
-// - Concurrent access support
-// - Good for production multi-user scenarios
-// - Requires database connection
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
-import type { CTCId, CTCType, CTCData } from '../types/index.js';
+import type { CTCType, CTCData } from '../types/index.js';
+import type { SignatureId } from '../constructs/Signature.js';
 
 export interface SQLStoreConfig extends BaseStoreConfig {
   /** Database connection string */
@@ -31,59 +26,34 @@ export class SQLStore implements Store {
   }
 
   async connect(): Promise<void> {
-    // TODO: Implement connection
-    // - Establish database connection
-    // - Run migrations if needed
-    // - Verify schema
     throw new Error('Not implemented');
   }
 
   async disconnect(): Promise<void> {
-    // TODO: Implement disconnection
-    // - Close database connection pool
     throw new Error('Not implemented');
   }
 
   async create(_type: CTCType, _data: CTCData): Promise<StoredCTC> {
-    // TODO: Implement create
-    // - INSERT into constructs table
-    // - Return created row
     throw new Error('Not implemented');
   }
 
-  async read(_id: CTCId): Promise<StoredCTC | undefined> {
-    // TODO: Implement read
-    // - SELECT by ID
-    // - Return row or undefined
+  async read(_id: SignatureId): Promise<StoredCTC | undefined> {
     throw new Error('Not implemented');
   }
 
-  async update(_id: CTCId, _data: CTCData): Promise<StoredCTC> {
-    // TODO: Implement update
-    // - UPDATE by ID
-    // - Return updated row
+  async update(_id: SignatureId, _data: CTCData): Promise<StoredCTC> {
     throw new Error('Not implemented');
   }
 
-  async delete(_id: CTCId): Promise<boolean> {
-    // TODO: Implement delete
-    // - DELETE by ID
-    // - Return affected rows > 0
+  async delete(_id: SignatureId): Promise<boolean> {
     throw new Error('Not implemented');
   }
 
   async list(_type: CTCType): Promise<StoredCTC[]> {
-    // TODO: Implement list
-    // - SELECT with type filter
-    // - Return rows
     throw new Error('Not implemented');
   }
 
   async search(_query: StoreQuery): Promise<StoredCTC[]> {
-    // TODO: Implement search
-    // - Build dynamic query from StoreQuery
-    // - Return matching rows
     throw new Error('Not implemented');
   }
 }
-
