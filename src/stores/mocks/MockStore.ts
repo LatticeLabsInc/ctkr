@@ -1,12 +1,11 @@
 // MockStore - A mock implementation of the Store interface for testing.
 
-import type { Store, StoredCTC, StoreQuery, CreateOptions } from '../Store.interface.js';
+import { AbstractStore } from '../AbstractStore.js';
+import type { StoredCTC, StoreQuery, CreateOptions } from '../Store.interface.js';
 import type { CTCType, CTCData } from '../../types/index.js';
 import type { SignatureId } from '../../constructs/Signature.js';
-import { createSignature, incrementVersion } from '../../constructs/Signature.js';
-import { createMetadata, updateMetadata } from '../../constructs/Metadata.js';
 
-export class MockStore implements Store {
+export class MockStore extends AbstractStore {
   readonly id: string;
   private constructs: Map<SignatureId, StoredCTC> = new Map();
 
@@ -23,6 +22,7 @@ export class MockStore implements Store {
   };
 
   constructor(id?: string) {
+    super();
     this.id = id ?? 'mock-store-' + crypto.randomUUID();
   }
 
@@ -39,79 +39,63 @@ export class MockStore implements Store {
     this.calls.search = [];
   }
 
-  async connect(): Promise<void> {
+  // Override public methods to track calls
+
+  override async connect(): Promise<void> {
     this.calls.connect.push({ args: [] });
+    return super.connect();
   }
 
-  async disconnect(): Promise<void> {
+  override async disconnect(): Promise<void> {
     this.calls.disconnect.push({ args: [] });
     this.constructs.clear();
   }
 
-  async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+  override async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
     this.calls.create.push({ args: [type, data, options] });
-
-    const signature = createSignature(this.id);
-    const metadata = createMetadata({
-      name: options?.name,
-      description: options?.description,
-    });
-
-    const stored: StoredCTC = {
-      signature,
-      metadata,
-      type,
-      data,
-    };
-
-    this.constructs.set(signature.id, stored);
-    return stored;
+    return super.create(type, data, options);
   }
 
-  async read(id: SignatureId): Promise<StoredCTC | undefined> {
+  override async read(id: SignatureId): Promise<StoredCTC | undefined> {
     this.calls.read.push({ args: [id] });
+    return super.read(id);
+  }
+
+  override async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+    this.calls.update.push({ args: [id, data, options] });
+    return super.update(id, data, options);
+  }
+
+  override async delete(id: SignatureId): Promise<boolean> {
+    this.calls.delete.push({ args: [id] });
+    return super.delete(id);
+  }
+
+  override async list(type: CTCType): Promise<StoredCTC[]> {
+    this.calls.list.push({ args: [type] });
+    return super.list(type);
+  }
+
+  override async search(query: StoreQuery): Promise<StoredCTC[]> {
+    this.calls.search.push({ args: [query] });
+    return super.search(query);
+  }
+
+  // Storage primitives
+
+  protected async _store(id: SignatureId, ctc: StoredCTC): Promise<void> {
+    this.constructs.set(id, ctc);
+  }
+
+  protected async _retrieve(id: SignatureId): Promise<StoredCTC | undefined> {
     return this.constructs.get(id);
   }
 
-  async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
-    this.calls.update.push({ args: [id, data, options] });
-
-    const existing = this.constructs.get(id);
-    if (!existing) {
-      throw new Error(`Construct not found: ${id}`);
-    }
-
-    const updated: StoredCTC = {
-      ...existing,
-      signature: incrementVersion(existing.signature),
-      metadata: updateMetadata(existing.metadata, {
-        name: options?.name ?? existing.metadata.name,
-        description: options?.description ?? existing.metadata.description,
-      }),
-      data,
-    };
-
-    this.constructs.set(id, updated);
-    return updated;
-  }
-
-  async delete(id: SignatureId): Promise<boolean> {
-    this.calls.delete.push({ args: [id] });
+  protected async _remove(id: SignatureId): Promise<boolean> {
     return this.constructs.delete(id);
   }
 
-  async list(type: CTCType): Promise<StoredCTC[]> {
-    this.calls.list.push({ args: [type] });
-    return Array.from(this.constructs.values()).filter(c => c.type === type);
-  }
-
-  async search(query: StoreQuery): Promise<StoredCTC[]> {
-    this.calls.search.push({ args: [query] });
-    let results = Array.from(this.constructs.values());
-    if (query.type) {
-      results = results.filter(c => c.type === query.type);
-    }
-    return results;
+  protected async _getAll(): Promise<StoredCTC[]> {
+    return Array.from(this.constructs.values());
   }
 }
-

@@ -1,22 +1,21 @@
 // An in-memory implementation of the Store interface.
 // Useful for testing, prototyping, and temporary storage.
 
-import type { Store, StoredCTC, StoreQuery, BaseStoreConfig, CreateOptions } from './Store.interface.js';
-import type { CTCType, CTCData } from '../types/index.js';
+import { AbstractStore } from './AbstractStore.js';
+import type { StoredCTC, BaseStoreConfig } from './Store.interface.js';
 import type { SignatureId } from '../constructs/Signature.js';
-import { createSignature, incrementVersion } from '../constructs/Signature.js';
-import { createMetadata, updateMetadata } from '../constructs/Metadata.js';
 
 export interface InMemoryStoreConfig extends BaseStoreConfig {
   name?: string;
 }
 
-export class InMemoryStore implements Store {
+export class InMemoryStore extends AbstractStore {
   readonly id: string;
   readonly name: string;
   private constructs: Map<SignatureId, StoredCTC> = new Map();
 
   constructor(name?: string | InMemoryStoreConfig) {
+    super();
     if (typeof name === 'string') {
       this.id = crypto.randomUUID();
       this.name = name;
@@ -26,69 +25,25 @@ export class InMemoryStore implements Store {
     }
   }
 
-  async connect(): Promise<void> {
-    // No-op for in-memory store
-  }
-
   async disconnect(): Promise<void> {
     this.constructs.clear();
   }
 
-  async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
-    const signature = createSignature(this.id);
-    const metadata = createMetadata({
-      name: options?.name,
-      description: options?.description,
-    });
+  // Storage primitives
 
-    const stored: StoredCTC = {
-      signature,
-      metadata,
-      type,
-      data,
-    };
-
-    this.constructs.set(signature.id, stored);
-    return stored;
+  protected async _store(id: SignatureId, ctc: StoredCTC): Promise<void> {
+    this.constructs.set(id, ctc);
   }
 
-  async read(id: SignatureId): Promise<StoredCTC | undefined> {
+  protected async _retrieve(id: SignatureId): Promise<StoredCTC | undefined> {
     return this.constructs.get(id);
   }
 
-  async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
-    const existing = this.constructs.get(id);
-    if (!existing) {
-      throw new Error(`Construct not found: ${id}`);
-    }
-
-    const updated: StoredCTC = {
-      ...existing,
-      signature: incrementVersion(existing.signature),
-      metadata: updateMetadata(existing.metadata, {
-        name: options?.name ?? existing.metadata.name,
-        description: options?.description ?? existing.metadata.description,
-      }),
-      data,
-    };
-
-    this.constructs.set(id, updated);
-    return updated;
-  }
-
-  async delete(id: SignatureId): Promise<boolean> {
+  protected async _remove(id: SignatureId): Promise<boolean> {
     return this.constructs.delete(id);
   }
 
-  async list(type: CTCType): Promise<StoredCTC[]> {
-    return Array.from(this.constructs.values()).filter(c => c.type === type);
-  }
-
-  async search(query: StoreQuery): Promise<StoredCTC[]> {
-    let results = Array.from(this.constructs.values());
-    if (query.type) {
-      results = results.filter(c => c.type === query.type);
-    }
-    return results;
+  protected async _getAll(): Promise<StoredCTC[]> {
+    return Array.from(this.constructs.values());
   }
 }
