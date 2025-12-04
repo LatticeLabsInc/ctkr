@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryStore } from '../InMemoryStore.js';
+import { ObjectType, MorphismType, FunctorType } from '../../types/index.js';
 
 describe('InMemoryStore', () => {
   let store: InMemoryStore;
@@ -35,7 +36,7 @@ describe('InMemoryStore', () => {
     });
 
     it('disconnect clears all constructs', async () => {
-      await store.create('Object', null);
+      await store.create(ObjectType, null);
       await store.disconnect();
       const results = await store.search({});
       expect(results).toHaveLength(0);
@@ -44,13 +45,13 @@ describe('InMemoryStore', () => {
 
   describe('create', () => {
     it('creates an Object with null data and metadata', async () => {
-      const obj = await store.create('Object', null, { name: 'test-obj' });
+      const obj = await store.create(ObjectType, null, { name: 'test-obj' });
       
       expect(obj.signature).toBeDefined();
       expect(obj.signature.id).toBeDefined();
       expect(obj.signature.storeId).toBe(store.id);
       expect(obj.signature.version).toBe(1);
-      expect(obj.type).toBe('Object');
+      expect(obj.type).toBe(ObjectType);
       expect(obj.data).toBeNull();
       expect(obj.metadata).toBeDefined();
       expect(obj.metadata.name).toBe('test-obj');
@@ -59,23 +60,23 @@ describe('InMemoryStore', () => {
     });
 
     it('creates a Morphism with from/to data', async () => {
-      const obj1 = await store.create('Object', null);
-      const obj2 = await store.create('Object', null);
-      const morphism = await store.create('Morphism', { from: obj1, to: obj2 });
+      const obj1 = await store.create(ObjectType, null);
+      const obj2 = await store.create(ObjectType, null);
+      const morphism = await store.create(MorphismType, { from: obj1, to: obj2 });
 
-      expect(morphism.type).toBe('Morphism');
+      expect(morphism.type).toBe(MorphismType);
       expect(morphism.data).toEqual({ from: obj1, to: obj2 });
     });
 
     it('generates unique IDs for each construct', async () => {
-      const obj1 = await store.create('Object', null);
-      const obj2 = await store.create('Object', null);
+      const obj1 = await store.create(ObjectType, null);
+      const obj2 = await store.create(ObjectType, null);
       
       expect(obj1.signature.id).not.toBe(obj2.signature.id);
     });
 
     it('creates with name and description', async () => {
-      const obj = await store.create('Object', null, { 
+      const obj = await store.create(ObjectType, null, { 
         name: 'My Object', 
         description: 'A test object' 
       });
@@ -87,7 +88,7 @@ describe('InMemoryStore', () => {
 
   describe('read', () => {
     it('reads an existing construct by signature ID', async () => {
-      const created = await store.create('Object', null, { name: 'test-obj' });
+      const created = await store.create(ObjectType, null, { name: 'test-obj' });
       const read = await store.read(created.signature.id);
 
       expect(read).toBeDefined();
@@ -103,7 +104,7 @@ describe('InMemoryStore', () => {
 
   describe('update', () => {
     it('updates an existing construct and increments version', async () => {
-      const created = await store.create('Object', null, { name: 'original' });
+      const created = await store.create(ObjectType, null, { name: 'original' });
       const updated = await store.update(created.signature.id, null, { name: 'updated' });
 
       expect(updated.signature.id).toBe(created.signature.id);
@@ -122,7 +123,7 @@ describe('InMemoryStore', () => {
 
   describe('delete', () => {
     it('deletes an existing construct', async () => {
-      const created = await store.create('Object', null);
+      const created = await store.create(ObjectType, null);
       const deleted = await store.delete(created.signature.id);
       
       expect(deleted).toBe(true);
@@ -137,40 +138,40 @@ describe('InMemoryStore', () => {
 
   describe('list', () => {
     it('returns all constructs of a given type', async () => {
-      await store.create('Object', null);
-      await store.create('Object', null);
-      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(ObjectType, null);
+      await store.create(ObjectType, null);
+      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
-      const objects = await store.list('Object');
-      const morphisms = await store.list('Morphism');
+      const objects = await store.list(ObjectType);
+      const morphisms = await store.list(MorphismType);
 
       expect(objects).toHaveLength(2);
       expect(morphisms).toHaveLength(1);
     });
 
     it('returns empty array when no constructs of type exist', async () => {
-      await store.create('Object', null);
-      const functors = await store.list('Functor');
+      await store.create(ObjectType, null);
+      const functors = await store.list(FunctorType);
       expect(functors).toHaveLength(0);
     });
   });
 
   describe('search', () => {
     it('returns all constructs when query is empty', async () => {
-      await store.create('Object', null);
-      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(ObjectType, null);
+      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
       const results = await store.search({});
       expect(results).toHaveLength(2);
     });
 
     it('filters by type when specified', async () => {
-      await store.create('Object', null);
-      await store.create('Morphism', { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(ObjectType, null);
+      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
 
-      const results = await store.search({ type: 'Object' });
+      const results = await store.search({ type: ObjectType });
       expect(results).toHaveLength(1);
-      expect(results[0].type).toBe('Object');
+      expect(results[0].type).toBe(ObjectType);
     });
   });
 });

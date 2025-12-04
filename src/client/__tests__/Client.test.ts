@@ -55,18 +55,18 @@ describe('Client', () => {
     });
 
     it('creates an Object in a store', async () => {
-      const obj = await client.createCTC('Object', null, store);
+      const obj = await client.createCTC(ObjectType, null, store);
 
       expect(obj.signature).toBeDefined();
       expect(obj.signature.id).toBeDefined();
       expect(obj.signature.storeId).toBe(store.id);
       expect(obj.signature.version).toBe(1);
-      expect(obj.type).toBe('Object');
+      expect(obj.type).toBe(ObjectType);
       expect(obj.metadata).toBeDefined();
     });
 
     it('creates an Object with name and description', async () => {
-      const obj = await client.createCTC('Object', null, store, {
+      const obj = await client.createCTC(ObjectType, null, store, {
         name: 'Test Object',
         description: 'A test object',
       });
@@ -76,17 +76,17 @@ describe('Client', () => {
     });
 
     it('creates a Morphism with from/to references', async () => {
-      const obj1 = await client.createCTC('Object', null, store);
-      const obj2 = await client.createCTC('Object', null, store);
-      const morphism = await client.createCTC('Morphism', { from: obj1, to: obj2 }, store);
+      const obj1 = await client.createCTC(ObjectType, null, store);
+      const obj2 = await client.createCTC(ObjectType, null, store);
+      const morphism = await client.createCTC(MorphismType, { from: obj1, to: obj2 }, store);
 
-      expect(morphism.type).toBe('Morphism');
+      expect(morphism.type).toBe(MorphismType);
       expect(morphism.data).toEqual({ from: obj1, to: obj2 });
     });
 
     it('throws when store is not attached', async () => {
       const unattachedStore = new InMemoryStore('unattached');
-      await expect(client.createCTC('Object', null, unattachedStore))
+      await expect(client.createCTC(ObjectType, null, unattachedStore))
         .rejects.toThrow('Store not attached');
     });
   });
@@ -97,7 +97,7 @@ describe('Client', () => {
     });
 
     it('finds a construct by signature ID', async () => {
-      const created = await client.createCTC('Object', null, store, { name: 'findme' });
+      const created = await client.createCTC(ObjectType, null, store, { name: 'findme' });
       const found = await client.getCTC(created.signature.id);
 
       expect(found).toBeDefined();
@@ -114,8 +114,8 @@ describe('Client', () => {
       const store2 = new InMemoryStore('store-2');
       client.attachStore(store2);
 
-      const obj1 = await client.createCTC('Object', null, store);
-      const obj2 = await client.createCTC('Object', null, store2);
+      const obj1 = await client.createCTC(ObjectType, null, store);
+      const obj2 = await client.createCTC(ObjectType, null, store2);
 
       expect(await client.getCTC(obj1.signature.id)).toBeDefined();
       expect(await client.getCTC(obj2.signature.id)).toBeDefined();
@@ -128,7 +128,7 @@ describe('Client', () => {
     });
 
     it('updates a construct and increments version', async () => {
-      const created = await client.createCTC('Object', null, store, { name: 'original' });
+      const created = await client.createCTC(ObjectType, null, store, { name: 'original' });
       const updated = await client.updateCTC(created.signature.id, null, store, { name: 'updated' });
 
       expect(updated.signature.id).toBe(created.signature.id);
@@ -143,7 +143,7 @@ describe('Client', () => {
     });
 
     it('deletes a construct', async () => {
-      const created = await client.createCTC('Object', null, store);
+      const created = await client.createCTC(ObjectType, null, store);
       const deleted = await client.deleteCTC(created.signature.id, store);
 
       expect(deleted).toBe(true);
