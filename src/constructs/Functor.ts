@@ -10,6 +10,7 @@
 // - Identity: F(id_A) = id_{F(A)}
 
 import type { Signature, SignatureId } from './Signature.js';
+import type { Metadata } from './Metadata.js';
 
 /**
  * Represents a category-theoretic Functor.
@@ -18,17 +19,17 @@ export interface CTFunctor {
   /** Unique signature identifying this functor */
   readonly signature: Signature;
   
+  /** Metadata (name, description, timestamps) */
+  readonly metadata: Metadata;
+  
   /** Signature ID of the source category */
   readonly sourceCategoryId: SignatureId;
   
   /** Signature ID of the target category */
   readonly targetCategoryId: SignatureId;
   
-  /** Optional display name */
-  readonly name?: string;
-  
-  /** Additional metadata */
-  readonly metadata?: Record<string, unknown>;
+  /** Additional custom properties */
+  readonly properties?: Record<string, unknown>;
 }
 
 /**

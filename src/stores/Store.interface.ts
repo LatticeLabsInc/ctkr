@@ -6,6 +6,7 @@
 
 import type { CTCType, CTCData } from '../types/index.js';
 import type { Signature, SignatureId } from '../constructs/Signature.js';
+import type { Metadata } from '../constructs/Metadata.js';
 
 /**
  * Represents a stored category-theoretic construct.
@@ -14,17 +15,22 @@ export interface StoredCTC {
   /** Unique signature for this construct */
   signature: Signature;
   
+  /** Metadata (name, description, timestamps) */
+  metadata: Metadata;
+  
   /** Type of construct (Object, Morphism, Category, Functor) */
   type: CTCType;
   
   /** Construct-specific data */
   data: CTCData;
-  
-  /** Creation timestamp */
-  createdAt: Date;
-  
-  /** Last update timestamp */
-  updatedAt: Date;
+}
+
+/**
+ * Options for creating a new construct.
+ */
+export interface CreateOptions {
+  name?: string;
+  description?: string;
 }
 
 /**
@@ -50,9 +56,10 @@ export interface Store {
    * Create a new construct in the store.
    * @param type - The type of construct to create
    * @param data - The construct data
-   * @returns The created construct with its signature
+   * @param options - Optional name and description
+   * @returns The created construct with its signature and metadata
    */
-  create(type: CTCType, data: CTCData): Promise<StoredCTC>;
+  create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC>;
 
   /**
    * Read a construct by signature ID.
@@ -65,9 +72,10 @@ export interface Store {
    * Update an existing construct.
    * @param id - The signature ID
    * @param data - The new construct data
+   * @param options - Optional metadata updates (name, description)
    * @returns The updated construct with incremented version
    */
-  update(id: SignatureId, data: CTCData): Promise<StoredCTC>;
+  update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC>;
 
   /**
    * Delete a construct.

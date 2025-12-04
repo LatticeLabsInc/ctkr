@@ -62,6 +62,17 @@ describe('Client', () => {
       expect(obj.signature.storeId).toBe(store.id);
       expect(obj.signature.version).toBe(1);
       expect(obj.type).toBe('Object');
+      expect(obj.metadata).toBeDefined();
+    });
+
+    it('creates an Object with name and description', async () => {
+      const obj = await client.createCTC('Object', null, store, {
+        name: 'Test Object',
+        description: 'A test object',
+      });
+
+      expect(obj.metadata.name).toBe('Test Object');
+      expect(obj.metadata.description).toBe('A test object');
     });
 
     it('creates a Morphism with from/to references', async () => {
@@ -86,12 +97,12 @@ describe('Client', () => {
     });
 
     it('finds a construct by signature ID', async () => {
-      const created = await client.createCTC('Object', { name: 'findme' }, store);
+      const created = await client.createCTC('Object', null, store, { name: 'findme' });
       const found = await client.getCTC(created.signature.id);
 
       expect(found).toBeDefined();
       expect(found?.signature.id).toBe(created.signature.id);
-      expect(found?.data).toEqual({ name: 'findme' });
+      expect(found?.metadata.name).toBe('findme');
     });
 
     it('returns undefined for non-existent ID', async () => {
@@ -117,12 +128,12 @@ describe('Client', () => {
     });
 
     it('updates a construct and increments version', async () => {
-      const created = await client.createCTC('Object', { name: 'original' }, store);
-      const updated = await client.updateCTC(created.signature.id, { name: 'updated' }, store);
+      const created = await client.createCTC('Object', null, store, { name: 'original' });
+      const updated = await client.updateCTC(created.signature.id, null, store, { name: 'updated' });
 
       expect(updated.signature.id).toBe(created.signature.id);
       expect(updated.signature.version).toBe(2);
-      expect(updated.data).toEqual({ name: 'updated' });
+      expect(updated.metadata.name).toBe('updated');
     });
   });
 
@@ -141,27 +152,35 @@ describe('Client', () => {
   });
 
   describe('full workflow', () => {
-    it('supports the intended usage pattern with signatures', async () => {
+    it('supports the intended usage pattern with signatures and metadata', async () => {
       const client = new Client();
       const store = client.attachStore(new InMemoryStore('personal store'));
 
-      // Create objects
-      const obj1 = await client.createCTC(ObjectType, null, store);
-      const obj2 = await client.createCTC(ObjectType, null, store);
+      // Create objects with names
+      const obj1 = await client.createCTC(ObjectType, null, store, { name: 'Object A' });
+      const obj2 = await client.createCTC(ObjectType, null, store, { name: 'Object B' });
 
       // Create morphism referencing objects
-      const morphism1 = await client.createCTC(MorphismType, { from: obj1, to: obj2 }, store);
+      const morphism1 = await client.createCTC(
+        MorphismType, 
+        { from: obj1, to: obj2 }, 
+        store,
+        { name: 'f: A → B' }
+      );
 
       // Retrieve by signature ID
       const foundObj1 = await client.getCTC(obj1.signature.id);
       expect(foundObj1?.signature.id).toBe(obj1.signature.id);
       expect(foundObj1?.signature.version).toBe(1);
+      expect(foundObj1?.metadata.name).toBe('Object A');
 
       const foundObj2 = await client.getCTC(obj2.signature.id);
       expect(foundObj2?.signature.id).toBe(obj2.signature.id);
+      expect(foundObj2?.metadata.name).toBe('Object B');
 
       const foundMorphism = await client.getCTC(morphism1.signature.id);
       expect(foundMorphism?.signature.id).toBe(morphism1.signature.id);
+      expect(foundMorphism?.metadata.name).toBe('f: A → B');
       expect(foundMorphism?.data).toEqual({ from: obj1, to: obj2 });
     });
   });

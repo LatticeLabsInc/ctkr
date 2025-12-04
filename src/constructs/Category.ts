@@ -11,6 +11,7 @@
 // - Identity: id ∘ f = f = f ∘ id
 
 import type { Signature } from './Signature.js';
+import type { Metadata } from './Metadata.js';
 
 /**
  * Represents a category-theoretic Category.
@@ -19,11 +20,11 @@ export interface CTCategory {
   /** Unique signature identifying this category */
   readonly signature: Signature;
   
-  /** Optional display name */
-  readonly name?: string;
+  /** Metadata (name, description, timestamps) */
+  readonly metadata: Metadata;
   
-  /** Additional metadata */
-  readonly metadata?: Record<string, unknown>;
+  /** Additional custom properties */
+  readonly properties?: Record<string, unknown>;
 }
 
 /**

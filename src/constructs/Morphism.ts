@@ -4,6 +4,7 @@
 // between objects in a category.
 
 import type { Signature, SignatureId } from './Signature.js';
+import type { Metadata } from './Metadata.js';
 
 /**
  * Represents a category-theoretic Morphism.
@@ -11,6 +12,9 @@ import type { Signature, SignatureId } from './Signature.js';
 export interface CTMorphism {
   /** Unique signature identifying this morphism */
   readonly signature: Signature;
+  
+  /** Metadata (name, description, timestamps) */
+  readonly metadata: Metadata;
   
   /** ID of the category this morphism belongs to */
   readonly categoryId?: string;
@@ -21,11 +25,8 @@ export interface CTMorphism {
   /** Signature ID of the target object */
   readonly targetId: SignatureId;
   
-  /** Optional display name */
-  readonly name?: string;
-  
-  /** Additional metadata */
-  readonly metadata?: Record<string, unknown>;
+  /** Additional custom properties */
+  readonly properties?: Record<string, unknown>;
 }
 
 /**

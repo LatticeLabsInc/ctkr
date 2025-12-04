@@ -16,29 +16,25 @@ export interface ClientConfig {
 
 // Data types for construct creation
 export interface ObjectData {
-  name?: string;
   categoryId?: string;
-  metadata?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
 export interface MorphismData {
   from: { signature: { id: string } };
   to: { signature: { id: string } };
   categoryId?: string;
-  name?: string;
-  metadata?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
 export interface CategoryData {
-  name?: string;
-  metadata?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
 export interface FunctorData {
   source: { signature: { id: string } };
   target: { signature: { id: string } };
-  name?: string;
-  metadata?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
 export type CTCData = ObjectData | MorphismData | CategoryData | FunctorData | null;

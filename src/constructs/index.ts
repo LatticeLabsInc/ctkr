@@ -3,6 +3,9 @@
 export type { Signature, SignatureId, Version } from './Signature.js';
 export { createSignature, incrementVersion, signaturesEqual } from './Signature.js';
 
+export type { Metadata } from './Metadata.js';
+export { createMetadata, updateMetadata } from './Metadata.js';
+
 export type { CTObject } from './Object.js';
 export { objectsEqual } from './Object.js';
 

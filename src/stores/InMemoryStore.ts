@@ -1,10 +1,11 @@
 // An in-memory implementation of the Store interface.
 // Useful for testing, prototyping, and temporary storage.
 
-import type { Store, StoredCTC, StoreQuery, BaseStoreConfig } from './Store.interface.js';
+import type { Store, StoredCTC, StoreQuery, BaseStoreConfig, CreateOptions } from './Store.interface.js';
 import type { CTCType, CTCData } from '../types/index.js';
 import type { SignatureId } from '../constructs/Signature.js';
 import { createSignature, incrementVersion } from '../constructs/Signature.js';
+import { createMetadata, updateMetadata } from '../constructs/Metadata.js';
 
 export interface InMemoryStoreConfig extends BaseStoreConfig {
   name?: string;
@@ -33,16 +34,18 @@ export class InMemoryStore implements Store {
     this.constructs.clear();
   }
 
-  async create(type: CTCType, data: CTCData): Promise<StoredCTC> {
+  async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
     const signature = createSignature(this.id);
-    const now = new Date();
+    const metadata = createMetadata({
+      name: options?.name,
+      description: options?.description,
+    });
 
     const stored: StoredCTC = {
       signature,
+      metadata,
       type,
       data,
-      createdAt: now,
-      updatedAt: now,
     };
 
     this.constructs.set(signature.id, stored);
@@ -53,7 +56,7 @@ export class InMemoryStore implements Store {
     return this.constructs.get(id);
   }
 
-  async update(id: SignatureId, data: CTCData): Promise<StoredCTC> {
+  async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
     const existing = this.constructs.get(id);
     if (!existing) {
       throw new Error(`Construct not found: ${id}`);
@@ -62,8 +65,11 @@ export class InMemoryStore implements Store {
     const updated: StoredCTC = {
       ...existing,
       signature: incrementVersion(existing.signature),
+      metadata: updateMetadata(existing.metadata, {
+        name: options?.name ?? existing.metadata.name,
+        description: options?.description ?? existing.metadata.description,
+      }),
       data,
-      updatedAt: new Date(),
     };
 
     this.constructs.set(id, updated);

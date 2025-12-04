@@ -43,8 +43,8 @@ describe('InMemoryStore', () => {
   });
 
   describe('create', () => {
-    it('creates an Object with null data', async () => {
-      const obj = await store.create('Object', null);
+    it('creates an Object with null data and metadata', async () => {
+      const obj = await store.create('Object', null, { name: 'test-obj' });
       
       expect(obj.signature).toBeDefined();
       expect(obj.signature.id).toBeDefined();
@@ -52,8 +52,10 @@ describe('InMemoryStore', () => {
       expect(obj.signature.version).toBe(1);
       expect(obj.type).toBe('Object');
       expect(obj.data).toBeNull();
-      expect(obj.createdAt).toBeInstanceOf(Date);
-      expect(obj.updatedAt).toBeInstanceOf(Date);
+      expect(obj.metadata).toBeDefined();
+      expect(obj.metadata.name).toBe('test-obj');
+      expect(obj.metadata.createdAt).toBeInstanceOf(Date);
+      expect(obj.metadata.updatedAt).toBeInstanceOf(Date);
     });
 
     it('creates a Morphism with from/to data', async () => {
@@ -71,16 +73,26 @@ describe('InMemoryStore', () => {
       
       expect(obj1.signature.id).not.toBe(obj2.signature.id);
     });
+
+    it('creates with name and description', async () => {
+      const obj = await store.create('Object', null, { 
+        name: 'My Object', 
+        description: 'A test object' 
+      });
+      
+      expect(obj.metadata.name).toBe('My Object');
+      expect(obj.metadata.description).toBe('A test object');
+    });
   });
 
   describe('read', () => {
     it('reads an existing construct by signature ID', async () => {
-      const created = await store.create('Object', { name: 'test-obj' });
+      const created = await store.create('Object', null, { name: 'test-obj' });
       const read = await store.read(created.signature.id);
 
       expect(read).toBeDefined();
       expect(read?.signature.id).toBe(created.signature.id);
-      expect(read?.data).toEqual({ name: 'test-obj' });
+      expect(read?.metadata.name).toBe('test-obj');
     });
 
     it('returns undefined for non-existent ID', async () => {
@@ -91,17 +103,19 @@ describe('InMemoryStore', () => {
 
   describe('update', () => {
     it('updates an existing construct and increments version', async () => {
-      const created = await store.create('Object', { name: 'original' });
-      const updated = await store.update(created.signature.id, { name: 'updated' });
+      const created = await store.create('Object', null, { name: 'original' });
+      const updated = await store.update(created.signature.id, null, { name: 'updated' });
 
       expect(updated.signature.id).toBe(created.signature.id);
       expect(updated.signature.version).toBe(2);
-      expect(updated.data).toEqual({ name: 'updated' });
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
+      expect(updated.metadata.name).toBe('updated');
+      expect(updated.metadata.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        created.metadata.createdAt.getTime()
+      );
     });
 
     it('throws for non-existent ID', async () => {
-      await expect(store.update('non-existent', { name: 'test' }))
+      await expect(store.update('non-existent', null, { name: 'test' }))
         .rejects.toThrow('Construct not found');
     });
   });
