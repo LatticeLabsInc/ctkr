@@ -108,21 +108,119 @@ export class Client {
   }
 
   /**
-   * Access metadata store operations.
-   * @returns Metadata query interface
+   * Access metadata query interface for searching constructs.
+   * @param store - Optional store to search in (searches all if not provided)
+   * @returns MetaQuery instance for building and executing queries
    */
-  meta(): MetaQuery {
-    // TODO: Implement metadata access
-    throw new Error('Not implemented');
+  meta(store?: Store): MetaQuery {
+    const stores = store ? [store] : Array.from(this.stores.values());
+    return new MetaQuery(stores);
   }
 }
 
 /**
- * Metadata query interface for searching store metadata.
+ * Options for filtering query results.
+ * Extensible for future query capabilities.
+ */
+export interface FindOptions {
+  /** Match name exactly (default: true) */
+  exactMatch?: boolean;
+  
+  /** Also search in description field */
+  searchDescription?: boolean;
+  
+  /** Filter by category ID (for Objects and Morphisms) */
+  categoryId?: string;
+  
+  // Future options:
+  // fuzzy?: boolean;
+  // caseSensitive?: boolean;
+  // limit?: number;
+  // offset?: number;
+}
+
+/**
+ * Metadata query interface for searching constructs by metadata.
  */
 export class MetaQuery {
-  find(_name: string, _type: CTCType): unknown {
-    throw new Error('Not implemented');
+  constructor(private readonly stores: Store[]) {}
+
+  /**
+   * Find constructs by type and name.
+   * 
+   * @param type - The type of construct to find
+   * @param name - The name to search for
+   * @param options - Optional search options
+   * @returns Array of matching constructs
+   * 
+   * @example
+   * // Find all Objects named "my-object"
+   * const results = await client.meta().find(ObjectType, 'my-object');
+   * 
+   * @example
+   * // Find in a specific store with options
+   * const results = await client.meta(store).find(ObjectType, 'test', {
+   *   exactMatch: false,
+   *   searchDescription: true,
+   * });
+   */
+  async find(type: CTCType, name: string, options?: FindOptions): Promise<StoredCTC[]> {
+    const exactMatch = options?.exactMatch ?? true;
+    const searchDescription = options?.searchDescription ?? false;
+    const categoryId = options?.categoryId;
+
+    const results: StoredCTC[] = [];
+
+    for (const store of this.stores) {
+      const constructs = await store.list(type);
+      
+      for (const ctc of constructs) {
+        // Check name match
+        const nameMatches = exactMatch
+          ? ctc.metadata.name === name
+          : ctc.metadata.name?.includes(name) ?? false;
+
+        // Check description match (if enabled)
+        const descriptionMatches = searchDescription && !exactMatch
+          ? ctc.metadata.description?.includes(name) ?? false
+          : false;
+
+        // Check category filter (if provided)
+        const categoryMatches = categoryId === undefined || this.matchesCategory(ctc, categoryId);
+
+        if ((nameMatches || descriptionMatches) && categoryMatches) {
+          results.push(ctc);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Find all constructs of a given type.
+   * 
+   * @param type - The type of construct to find
+   * @returns Array of all constructs of that type
+   */
+  async findAll(type: CTCType): Promise<StoredCTC[]> {
+    const results: StoredCTC[] = [];
+    
+    for (const store of this.stores) {
+      const constructs = await store.list(type);
+      results.push(...constructs);
+    }
+    
+    return results;
+  }
+
+  /**
+   * Check if a construct belongs to a specific category.
+   */
+  private matchesCategory(ctc: StoredCTC, categoryId: string): boolean {
+    const data = ctc.data as Record<string, unknown> | null;
+    if (!data) return false;
+    return data.categoryId === categoryId;
   }
 }
 
