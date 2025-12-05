@@ -15,6 +15,7 @@ import {
 } from '../types/index.js';
 import type { SignatureId } from '../data-constructs/Signature.js';
 import { QueryEngine } from './QueryEngine.js';
+import { SemanticOperations } from './SemanticOperations.js';
 import { 
   RichCTC, 
   RichCategory, 
@@ -460,6 +461,14 @@ export class Client {
     const stores = store ? [store] : Array.from(this.stores.values());
     return new MetaQuery(stores, this.queryEngine);
   }
+
+  /**
+   * Access semantic operations for higher-level construct manipulation.
+   * @returns SemanticOperations instance
+   */
+  semantic(): SemanticOperations {
+    return new SemanticOperations(this);
+  }
 }
 
 /**
@@ -597,3 +606,5 @@ export function getClient(config?: ClientConfig): Client {
 // Re-export rich constructs for convenience
 export { RichCTC, RichCategory, RichObject, RichMorphism, RichFunctor, toRich };
 export { QueryEngine };
+export { SemanticOperations } from './SemanticOperations.js';
+export type { ExtractOptions, ExtractResult } from './SemanticOperations.js';

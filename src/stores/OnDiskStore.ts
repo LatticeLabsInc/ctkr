@@ -4,8 +4,8 @@
 // Persists data to disk using JSON files.
 
 import type { Store, StoredCTC, StoreQuery, BaseStoreConfig, CreateOptions } from './Store.interface.js';
-import type { CTCType, CTCData } from '../types/index.js';
-import type { SignatureId } from '../constructs/Signature.js';
+import type { CTCType, CTCInput } from '../types/index.js';
+import type { SignatureId } from '../data-constructs/Signature.js';
 
 export interface OnDiskStoreConfig extends BaseStoreConfig {
   /** Directory path where data will be stored */
@@ -29,7 +29,7 @@ export class OnDiskStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async create(_type: CTCType, _data: CTCData, _options?: CreateOptions): Promise<StoredCTC> {
+  async create(_type: CTCType, _data: CTCInput, _options?: CreateOptions): Promise<StoredCTC> {
     throw new Error('Not implemented');
   }
 
@@ -37,7 +37,7 @@ export class OnDiskStore implements Store {
     throw new Error('Not implemented');
   }
 
-  async update(_id: SignatureId, _data: CTCData, _options?: CreateOptions): Promise<StoredCTC> {
+  async update(_id: SignatureId, _data: CTCInput, _options?: CreateOptions): Promise<StoredCTC> {
     throw new Error('Not implemented');
   }
 
