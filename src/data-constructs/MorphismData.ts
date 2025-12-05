@@ -27,6 +27,9 @@ export interface MorphismData {
   
   /** Additional custom properties */
   readonly properties?: Record<string, unknown>;
+
+  /** True if this is an identity morphism (id_A: A → A) */
+  readonly isIdentity?: boolean;
 }
 
 /**

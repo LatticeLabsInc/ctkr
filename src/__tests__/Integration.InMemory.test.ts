@@ -15,6 +15,14 @@ import {
 } from '../types/index.js';
 
 /**
+ * Helper to filter out identity morphisms from a list of morphisms.
+ * Identity morphisms are auto-created when objects are created.
+ */
+function nonIdentityMorphisms(morphisms: RichMorphism[]): RichMorphism[] {
+  return morphisms.filter(m => !m.morphismData?.isIdentity);
+}
+
+/**
  * Integration tests using InMemoryStore.
  * 
  * These tests exercise the full API including:
@@ -87,9 +95,12 @@ describe('Integration (InMemoryStore)', () => {
 
       it('cat.getMorphisms() returns all morphisms in category', async () => {
         const morphisms = await category.getMorphisms();
+        const userMorphisms = nonIdentityMorphisms(morphisms);
         
-        expect(morphisms).toHaveLength(3);
-        expect(morphisms.map(m => m.metadata.name)).toEqual(
+        // 3 user-created morphisms + 3 identity morphisms (one per object)
+        expect(morphisms).toHaveLength(6);
+        expect(userMorphisms).toHaveLength(3);
+        expect(userMorphisms.map(m => m.metadata.name)).toEqual(
           expect.arrayContaining(['f: A → B', 'g: B → C', 'h: A → C (composition)'])
         );
       });
@@ -106,18 +117,24 @@ describe('Integration (InMemoryStore)', () => {
     describe('Object queries', () => {
       it('obj.getMorphismsFrom() returns outgoing morphisms', async () => {
         const morphisms = await objA.getMorphismsFrom();
+        const userMorphisms = nonIdentityMorphisms(morphisms);
         
-        expect(morphisms).toHaveLength(2);
-        expect(morphisms.map(m => m.metadata.name)).toEqual(
+        // 2 user morphisms + 1 identity morphism
+        expect(morphisms).toHaveLength(3);
+        expect(userMorphisms).toHaveLength(2);
+        expect(userMorphisms.map(m => m.metadata.name)).toEqual(
           expect.arrayContaining(['f: A → B', 'h: A → C (composition)'])
         );
       });
 
       it('obj.getMorphismsTo() returns incoming morphisms', async () => {
         const morphisms = await objC.getMorphismsTo();
+        const userMorphisms = nonIdentityMorphisms(morphisms);
         
-        expect(morphisms).toHaveLength(2);
-        expect(morphisms.map(m => m.metadata.name)).toEqual(
+        // 2 user morphisms + 1 identity morphism
+        expect(morphisms).toHaveLength(3);
+        expect(userMorphisms).toHaveLength(2);
+        expect(userMorphisms.map(m => m.metadata.name)).toEqual(
           expect.arrayContaining(['g: B → C', 'h: A → C (composition)'])
         );
       });
@@ -156,11 +173,12 @@ describe('Integration (InMemoryStore)', () => {
         const B = await morF.getTargetObject();
         expect(B?.metadata.name).toBe('Object B');
         
-        // Get morphisms from B
+        // Get non-identity morphisms from B
         const fromB = await B!.getMorphismsFrom();
-        expect(fromB).toHaveLength(1);
+        const userFromB = nonIdentityMorphisms(fromB);
+        expect(userFromB).toHaveLength(1);
         
-        const C = await fromB[0].getTargetObject();
+        const C = await userFromB[0].getTargetObject();
         expect(C?.metadata.name).toBe('Object C');
       });
     });
@@ -394,14 +412,16 @@ describe('Integration (InMemoryStore)', () => {
       
       // Query: What can Int convert to?
       const intConversions = await intType.getMorphismsFrom();
-      expect(intConversions).toHaveLength(2);
-      expect(intConversions.map(m => m.metadata.name)).toEqual(
+      const userIntConversions = nonIdentityMorphisms(intConversions);
+      expect(userIntConversions).toHaveLength(2);
+      expect(userIntConversions.map(m => m.metadata.name)).toEqual(
         expect.arrayContaining(['toString', 'toBool'])
       );
       
       // Query: What can convert to String?
       const toStringConversions = await stringType.getMorphismsTo();
-      expect(toStringConversions).toHaveLength(2);
+      const userToString = nonIdentityMorphisms(toStringConversions);
+      expect(userToString).toHaveLength(2);
       
       // Query: Find the toString morphism by name
       const found = await client.meta().find(MorphismType, 'toString', {
@@ -412,8 +432,9 @@ describe('Integration (InMemoryStore)', () => {
       
       // Traverse: From Bool, what's reachable?
       const fromBool = await boolType.getMorphismsFrom();
-      expect(fromBool).toHaveLength(1);
-      const target = await fromBool[0].getTargetObject();
+      const userFromBool = nonIdentityMorphisms(fromBool);
+      expect(userFromBool).toHaveLength(1);
+      const target = await userFromBool[0].getTargetObject();
       expect(target?.metadata.name).toBe('String');
     });
 
@@ -553,15 +574,19 @@ describe('Integration (InMemoryStore)', () => {
       expect(morphisms).toHaveLength(0);
     });
 
-    it('handles objects with no morphisms', async () => {
+    it('handles objects with no user-created morphisms', async () => {
       const cat = await client.createCategory(store1, { name: 'Cat' });
       const obj = await client.createObject(store1, cat, { name: 'Lonely' });
       
       const from = await obj.getMorphismsFrom();
       const to = await obj.getMorphismsTo();
       
-      expect(from).toHaveLength(0);
-      expect(to).toHaveLength(0);
+      // Object has its identity morphism but no user-created morphisms
+      expect(from).toHaveLength(1);
+      expect(to).toHaveLength(1);
+      expect(from[0].morphismData?.isIdentity).toBe(true);
+      expect(nonIdentityMorphisms(from)).toHaveLength(0);
+      expect(nonIdentityMorphisms(to)).toHaveLength(0);
     });
 
     it('handles objects without category', async () => {

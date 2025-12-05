@@ -243,6 +243,7 @@ export class Client {
 
   /**
    * Create an object in a category.
+   * Automatically creates an identity morphism (id_A: A → A) for the object.
    */
   async createObject(
     store: Store,
@@ -259,14 +260,52 @@ export class Client {
       morphismsToIds: [],
     };
     const stored = await this.createCTC(ObjectType, data, store, options);
+    const objectId = stored.signature.id;
     
     // Maintain bidirectional pointer: add object ID to category's objectIds
     if (categoryId) {
       const categoryStore = await this.findStoreFor(categoryId) ?? store;
-      await this.addIdToArray(categoryId, categoryStore, 'objectIds', stored.signature.id);
+      await this.addIdToArray(categoryId, categoryStore, 'objectIds', objectId);
     }
     
-    return new RichObject(stored, this.queryEngine);
+    // Create identity morphism (id_A: A → A)
+    const objectName = options?.name || 'unnamed';
+    const identityData = {
+      sourceId: objectId,
+      targetId: objectId,
+      categoryId,
+      isIdentity: true,
+    };
+    const identityMorphism = await this.createCTC(
+      MorphismType, 
+      identityData, 
+      store, 
+      { name: `id_${objectName}` }
+    );
+    const identityId = identityMorphism.signature.id;
+    
+    // Update the object to store the identity morphism ID
+    const updatedData: CreateObjectInput = {
+      ...data,
+      identityMorphismId: identityId,
+      morphismsFromIds: [identityId],
+      morphismsToIds: [identityId],
+    };
+    await store.update(objectId, updatedData);
+    
+    // Maintain bidirectional pointer: add identity morphism ID to category's morphismIds
+    if (categoryId) {
+      const categoryStore = await this.findStoreFor(categoryId) ?? store;
+      await this.addIdToArray(categoryId, categoryStore, 'morphismIds', identityId);
+    }
+    
+    // Re-read the updated object
+    const updatedStored = await store.read(objectId);
+    if (!updatedStored) {
+      throw new Error('Failed to read updated object');
+    }
+    
+    return new RichObject(updatedStored, this.queryEngine);
   }
 
   /**

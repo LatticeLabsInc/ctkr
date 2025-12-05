@@ -26,6 +26,8 @@ export interface CreateObjectInput {
   // Bidirectional pointers (maintained by Client)
   morphismsFromIds?: string[];
   morphismsToIds?: string[];
+  // Identity morphism (auto-created by Client)
+  identityMorphismId?: string;
 }
 
 export interface CreateMorphismInput {
@@ -33,6 +35,8 @@ export interface CreateMorphismInput {
   targetId: string;
   categoryId?: string;
   properties?: Record<string, unknown>;
+  /** True if this is an identity morphism (id_A: A → A) */
+  isIdentity?: boolean;
 }
 
 export interface CreateCategoryInput {

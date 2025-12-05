@@ -54,5 +54,24 @@ export class RichObject extends RichCTC {
     const cat = await this.queryEngine.get(this.categoryId);
     return cat ? new RichCategory(cat, this.queryEngine) : undefined;
   }
+
+  /**
+   * Get the identity morphism ID for this object (if available).
+   */
+  get identityMorphismId(): string | undefined {
+    return this.objectData?.identityMorphismId;
+  }
+
+  /**
+   * Get the identity morphism for this object.
+   * Every object has an identity morphism (id_A: A → A) that is automatically
+   * created when the object is created.
+   */
+  async getIdentityMorphism(): Promise<RichMorphism | undefined> {
+    const id = this.identityMorphismId;
+    if (!id) return undefined;
+    const mor = await this.queryEngine.get(id);
+    return mor ? new RichMorphism(mor, this.queryEngine) : undefined;
+  }
 }
 

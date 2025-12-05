@@ -31,6 +31,9 @@ export interface ObjectData {
   
   /** IDs of all morphisms where this object is the target */
   readonly morphismsToIds?: string[];
+
+  /** ID of the identity morphism for this object (id_A: A → A) */
+  readonly identityMorphismId?: string;
 }
 
 /**
