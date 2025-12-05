@@ -1,12 +1,14 @@
 // Core CTKR types
 
-export type CTCType = 'Object' | 'Morphism' | 'Category' | 'Functor';
+export type CTCType = 'Object' | 'Morphism' | 'Category' | 'Functor' | 'ObjectMapping' | 'MorphismMapping';
 
 // Type constants for use in createCTC calls
 export const ObjectType: CTCType = 'Object';
 export const MorphismType: CTCType = 'Morphism';
 export const CategoryType: CTCType = 'Category';
 export const FunctorType: CTCType = 'Functor';
+export const ObjectMappingType: CTCType = 'ObjectMapping';
+export const MorphismMappingType: CTCType = 'MorphismMapping';
 
 export type StoreId = string;
 
@@ -21,8 +23,8 @@ export interface ObjectData {
 }
 
 export interface MorphismData {
-  from: { signature: { id: string } };
-  to: { signature: { id: string } };
+  sourceId: string;
+  targetId: string;
   categoryId?: string;
   properties?: Record<string, unknown>;
 }
@@ -32,9 +34,29 @@ export interface CategoryData {
 }
 
 export interface FunctorData {
-  source: { signature: { id: string } };
-  target: { signature: { id: string } };
+  sourceCategoryId: string;
+  targetCategoryId: string;
   properties?: Record<string, unknown>;
 }
 
-export type CTCData = ObjectData | MorphismData | CategoryData | FunctorData | null;
+/**
+ * Maps an object in the source category to an object in the target category.
+ * Created as part of defining a functor.
+ */
+export interface ObjectMappingData {
+  functorId: string;
+  sourceObjectId: string;
+  targetObjectId: string;
+}
+
+/**
+ * Maps a morphism in the source category to a morphism in the target category.
+ * Created as part of defining a functor.
+ */
+export interface MorphismMappingData {
+  functorId: string;
+  sourceMorphismId: string;
+  targetMorphismId: string;
+}
+
+export type CTCData = ObjectData | MorphismData | CategoryData | FunctorData | ObjectMappingData | MorphismMappingData | null;

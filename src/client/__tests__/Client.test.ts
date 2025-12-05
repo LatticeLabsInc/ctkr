@@ -75,13 +75,19 @@ describe('Client', () => {
       expect(obj.metadata.description).toBe('A test object');
     });
 
-    it('creates a Morphism with from/to references', async () => {
+    it('creates a Morphism with source/target references', async () => {
       const obj1 = await client.createCTC(ObjectType, null, store);
       const obj2 = await client.createCTC(ObjectType, null, store);
-      const morphism = await client.createCTC(MorphismType, { from: obj1, to: obj2 }, store);
+      const morphism = await client.createCTC(MorphismType, { 
+        sourceId: obj1.signature.id, 
+        targetId: obj2.signature.id 
+      }, store);
 
       expect(morphism.type).toBe(MorphismType);
-      expect(morphism.data).toEqual({ from: obj1, to: obj2 });
+      expect(morphism.data).toEqual({ 
+        sourceId: obj1.signature.id, 
+        targetId: obj2.signature.id 
+      });
     });
 
     it('throws when store is not attached', async () => {
@@ -198,7 +204,7 @@ describe('Client', () => {
       // Create morphism referencing objects
       const morphism1 = await client.createCTC(
         MorphismType, 
-        { from: obj1, to: obj2 }, 
+        { sourceId: obj1.signature.id, targetId: obj2.signature.id }, 
         store,
         { name: 'f: A → B' }
       );
@@ -216,7 +222,7 @@ describe('Client', () => {
       const foundMorphism = await client.getCTC(morphism1.signature.id);
       expect(foundMorphism?.signature.id).toBe(morphism1.signature.id);
       expect(foundMorphism?.metadata.name).toBe('f: A → B');
-      expect(foundMorphism?.data).toEqual({ from: obj1, to: obj2 });
+      expect(foundMorphism?.data).toEqual({ sourceId: obj1.signature.id, targetId: obj2.signature.id });
     });
   });
 });

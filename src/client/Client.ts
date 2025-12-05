@@ -2,13 +2,49 @@
 
 import type { Store, StoredCTC, CreateOptions } from '../stores/Store.interface.js';
 import type { ClientConfig, StoreId, CTCType, CTCData } from '../types/index.js';
+import { 
+  ObjectType, 
+  MorphismType, 
+  CategoryType, 
+  FunctorType,
+  ObjectMappingType,
+  MorphismMappingType,
+} from '../types/index.js';
 import type { SignatureId } from '../constructs/Signature.js';
+import { QueryEngine } from './QueryEngine.js';
+import { 
+  RichCTC, 
+  RichCategory, 
+  RichObject, 
+  RichMorphism, 
+  RichFunctor,
+  toRich 
+} from './RichConstructs.js';
 
 export class Client {
   private stores: Map<StoreId, Store> = new Map();
+  private _queryEngine: QueryEngine | null = null;
 
   constructor(_config?: ClientConfig) {
     // Initialize client
+  }
+
+  /**
+   * Get the query engine for this client.
+   * Lazily created and updated when stores change.
+   */
+  private get queryEngine(): QueryEngine {
+    if (!this._queryEngine) {
+      this._queryEngine = new QueryEngine(Array.from(this.stores.values()));
+    }
+    return this._queryEngine;
+  }
+
+  /**
+   * Invalidate the query engine (called when stores change).
+   */
+  private invalidateQueryEngine(): void {
+    this._queryEngine = null;
   }
 
   /**
@@ -18,6 +54,7 @@ export class Client {
    */
   attachStore(store: Store): Store {
     this.stores.set(store.id, store);
+    this.invalidateQueryEngine();
     return store;
   }
 
@@ -27,6 +64,7 @@ export class Client {
    */
   detachStore(storeId: StoreId): void {
     this.stores.delete(storeId);
+    this.invalidateQueryEngine();
   }
 
   /**
@@ -37,6 +75,10 @@ export class Client {
   getStore(storeId: StoreId): Store | undefined {
     return this.stores.get(storeId);
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Raw CTC operations (return StoredCTC)
+  // ─────────────────────────────────────────────────────────────────────────────
 
   /**
    * Create a new category-theoretic construct in a store.
@@ -107,6 +149,182 @@ export class Client {
     return store.delete(id);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Rich construct creation
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Create a category.
+   */
+  async createCategory(
+    store: Store,
+    options?: CreateOptions & { properties?: Record<string, unknown> }
+  ): Promise<RichCategory> {
+    const data = options?.properties ? { properties: options.properties } : null;
+    const stored = await this.createCTC(CategoryType, data, store, options);
+    return new RichCategory(stored, this.queryEngine);
+  }
+
+  /**
+   * Create an object in a category.
+   */
+  async createObject(
+    store: Store,
+    category?: RichCategory | string,
+    options?: CreateOptions & { properties?: Record<string, unknown> }
+  ): Promise<RichObject> {
+    const categoryId = category 
+      ? (typeof category === 'string' ? category : category.signature.id)
+      : undefined;
+    const data = { 
+      categoryId,
+      properties: options?.properties,
+    };
+    const stored = await this.createCTC(ObjectType, data, store, options);
+    return new RichObject(stored, this.queryEngine);
+  }
+
+  /**
+   * Create a morphism between objects.
+   */
+  async createMorphism(
+    source: RichObject | string,
+    target: RichObject | string,
+    store: Store,
+    category?: RichCategory | string,
+    options?: CreateOptions & { properties?: Record<string, unknown> }
+  ): Promise<RichMorphism> {
+    const sourceId = typeof source === 'string' ? source : source.signature.id;
+    const targetId = typeof target === 'string' ? target : target.signature.id;
+    const categoryId = category 
+      ? (typeof category === 'string' ? category : category.signature.id)
+      : undefined;
+    const data = {
+      sourceId,
+      targetId,
+      categoryId,
+      properties: options?.properties,
+    };
+    const stored = await this.createCTC(MorphismType, data, store, options);
+    return new RichMorphism(stored, this.queryEngine);
+  }
+
+  /**
+   * Create a functor between categories.
+   */
+  async createFunctor(
+    source: RichCategory | string,
+    target: RichCategory | string,
+    store: Store,
+    options?: CreateOptions & { properties?: Record<string, unknown> }
+  ): Promise<RichFunctor> {
+    const sourceCategoryId = typeof source === 'string' ? source : source.signature.id;
+    const targetCategoryId = typeof target === 'string' ? target : target.signature.id;
+    const data = {
+      sourceCategoryId,
+      targetCategoryId,
+      properties: options?.properties,
+    };
+    const stored = await this.createCTC(FunctorType, data, store, options);
+    return new RichFunctor(stored, this.queryEngine);
+  }
+
+  /**
+   * Add an object mapping to a functor.
+   */
+  async addObjectMapping(
+    functor: RichFunctor | string,
+    sourceObject: RichObject | string,
+    targetObject: RichObject | string,
+    store: Store
+  ): Promise<StoredCTC> {
+    const functorId = typeof functor === 'string' ? functor : functor.signature.id;
+    const sourceObjectId = typeof sourceObject === 'string' ? sourceObject : sourceObject.signature.id;
+    const targetObjectId = typeof targetObject === 'string' ? targetObject : targetObject.signature.id;
+    const data = {
+      functorId,
+      sourceObjectId,
+      targetObjectId,
+    };
+    return this.createCTC(ObjectMappingType, data, store);
+  }
+
+  /**
+   * Add a morphism mapping to a functor.
+   */
+  async addMorphismMapping(
+    functor: RichFunctor | string,
+    sourceMorphism: RichMorphism | string,
+    targetMorphism: RichMorphism | string,
+    store: Store
+  ): Promise<StoredCTC> {
+    const functorId = typeof functor === 'string' ? functor : functor.signature.id;
+    const sourceMorphismId = typeof sourceMorphism === 'string' ? sourceMorphism : sourceMorphism.signature.id;
+    const targetMorphismId = typeof targetMorphism === 'string' ? targetMorphism : targetMorphism.signature.id;
+    const data = {
+      functorId,
+      sourceMorphismId,
+      targetMorphismId,
+    };
+    return this.createCTC(MorphismMappingType, data, store);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Rich retrieval
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get a rich construct by ID.
+   */
+  async get(id: SignatureId): Promise<RichCTC | undefined> {
+    const stored = await this.getCTC(id);
+    return stored ? toRich(stored, this.queryEngine) : undefined;
+  }
+
+  /**
+   * Get a category by ID.
+   */
+  async getCategory(id: SignatureId): Promise<RichCategory | undefined> {
+    const stored = await this.getCTC(id);
+    if (stored && stored.type === CategoryType) {
+      return new RichCategory(stored, this.queryEngine);
+    }
+    return undefined;
+  }
+
+  /**
+   * Get an object by ID.
+   */
+  async getObject(id: SignatureId): Promise<RichObject | undefined> {
+    const stored = await this.getCTC(id);
+    if (stored && stored.type === ObjectType) {
+      return new RichObject(stored, this.queryEngine);
+    }
+    return undefined;
+  }
+
+  /**
+   * Get a morphism by ID.
+   */
+  async getMorphism(id: SignatureId): Promise<RichMorphism | undefined> {
+    const stored = await this.getCTC(id);
+    if (stored && stored.type === MorphismType) {
+      return new RichMorphism(stored, this.queryEngine);
+    }
+    return undefined;
+  }
+
+  /**
+   * Get a functor by ID.
+   */
+  async getFunctor(id: SignatureId): Promise<RichFunctor | undefined> {
+    const stored = await this.getCTC(id);
+    if (stored && stored.type === FunctorType) {
+      return new RichFunctor(stored, this.queryEngine);
+    }
+    return undefined;
+  }
+
   /**
    * Access metadata query interface for searching constructs.
    * @param store - Optional store to search in (searches all if not provided)
@@ -114,7 +332,7 @@ export class Client {
    */
   meta(store?: Store): MetaQuery {
     const stores = store ? [store] : Array.from(this.stores.values());
-    return new MetaQuery(stores);
+    return new MetaQuery(stores, this.queryEngine);
   }
 }
 
@@ -143,7 +361,10 @@ export interface FindOptions {
  * Metadata query interface for searching constructs by metadata.
  */
 export class MetaQuery {
-  constructor(private readonly stores: Store[]) {}
+  constructor(
+    private readonly stores: Store[],
+    private readonly queryEngine: QueryEngine
+  ) {}
 
   /**
    * Find constructs by type and name.
@@ -198,6 +419,14 @@ export class MetaQuery {
   }
 
   /**
+   * Find constructs by type and name, returning rich constructs.
+   */
+  async findRich(type: CTCType, name: string, options?: FindOptions): Promise<RichCTC[]> {
+    const stored = await this.find(type, name, options);
+    return stored.map(s => toRich(s, this.queryEngine));
+  }
+
+  /**
    * Find all constructs of a given type.
    * 
    * @param type - The type of construct to find
@@ -212,6 +441,14 @@ export class MetaQuery {
     }
     
     return results;
+  }
+
+  /**
+   * Find all constructs of a given type, returning rich constructs.
+   */
+  async findAllRich(type: CTCType): Promise<RichCTC[]> {
+    const stored = await this.findAll(type);
+    return stored.map(s => toRich(s, this.queryEngine));
   }
 
   /**
@@ -230,3 +467,7 @@ export class MetaQuery {
 export function getClient(config?: ClientConfig): Client {
   return new Client(config);
 }
+
+// Re-export rich constructs for convenience
+export { RichCTC, RichCategory, RichObject, RichMorphism, RichFunctor, toRich };
+export { QueryEngine };

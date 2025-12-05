@@ -128,7 +128,7 @@ describe('MetaQuery', () => {
     it('returns all constructs of a given type', async () => {
       await client.createCTC(ObjectType, null, store, { name: 'obj1' });
       await client.createCTC(ObjectType, null, store, { name: 'obj2' });
-      await client.createCTC(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } }, store);
+      await client.createCTC(MorphismType, { sourceId: 'a', targetId: 'b' }, store);
 
       const objects = await client.meta().findAll(ObjectType);
       const morphisms = await client.meta().findAll(MorphismType);

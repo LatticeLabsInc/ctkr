@@ -6,4 +6,11 @@ export * from './constructs/index.js';
 export * from './stores/index.js';
 
 // Re-export type constants at top level for convenience
-export { ObjectType, MorphismType, CategoryType, FunctorType } from './types/index.js';
+export { 
+  ObjectType, 
+  MorphismType, 
+  CategoryType, 
+  FunctorType,
+  ObjectMappingType,
+  MorphismMappingType,
+} from './types/index.js';

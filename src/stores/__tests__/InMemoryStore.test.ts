@@ -59,13 +59,19 @@ describe('InMemoryStore', () => {
       expect(obj.metadata.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('creates a Morphism with from/to data', async () => {
+    it('creates a Morphism with sourceId/targetId data', async () => {
       const obj1 = await store.create(ObjectType, null);
       const obj2 = await store.create(ObjectType, null);
-      const morphism = await store.create(MorphismType, { from: obj1, to: obj2 });
+      const morphism = await store.create(MorphismType, { 
+        sourceId: obj1.signature.id, 
+        targetId: obj2.signature.id 
+      });
 
       expect(morphism.type).toBe(MorphismType);
-      expect(morphism.data).toEqual({ from: obj1, to: obj2 });
+      expect(morphism.data).toEqual({ 
+        sourceId: obj1.signature.id, 
+        targetId: obj2.signature.id 
+      });
     });
 
     it('generates unique IDs for each construct', async () => {
@@ -140,7 +146,7 @@ describe('InMemoryStore', () => {
     it('returns all constructs of a given type', async () => {
       await store.create(ObjectType, null);
       await store.create(ObjectType, null);
-      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(MorphismType, { sourceId: 'a', targetId: 'b' });
 
       const objects = await store.list(ObjectType);
       const morphisms = await store.list(MorphismType);
@@ -159,7 +165,7 @@ describe('InMemoryStore', () => {
   describe('search', () => {
     it('returns all constructs when query is empty', async () => {
       await store.create(ObjectType, null);
-      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(MorphismType, { sourceId: 'a', targetId: 'b' });
 
       const results = await store.search({});
       expect(results).toHaveLength(2);
@@ -167,7 +173,7 @@ describe('InMemoryStore', () => {
 
     it('filters by type when specified', async () => {
       await store.create(ObjectType, null);
-      await store.create(MorphismType, { from: { signature: { id: 'a' } }, to: { signature: { id: 'b' } } });
+      await store.create(MorphismType, { sourceId: 'a', targetId: 'b' });
 
       const results = await store.search({ type: ObjectType });
       expect(results).toHaveLength(1);
