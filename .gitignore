@@ -28,3 +28,6 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# Performance test results (HTML files)
+src/client/__tests__/results/*.html
+
