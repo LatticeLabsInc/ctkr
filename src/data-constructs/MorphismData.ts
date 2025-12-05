@@ -1,4 +1,4 @@
-// Morphism construct
+// MorphismData - data structure for a category-theoretic Morphism
 //
 // In category theory, a Morphism (or arrow) is a structure-preserving map
 // between objects in a category.
@@ -7,9 +7,9 @@ import type { Signature, SignatureId } from './Signature.js';
 import type { Metadata } from './Metadata.js';
 
 /**
- * Represents a category-theoretic Morphism.
+ * Data structure representing a stored category-theoretic Morphism.
  */
-export interface CTMorphism {
+export interface MorphismData {
   /** Unique signature identifying this morphism */
   readonly signature: Signature;
   
@@ -32,18 +32,15 @@ export interface CTMorphism {
 /**
  * Check if two morphisms are composable (f ; g).
  * Morphisms are composable if f.target === g.source.
- * @param f - First morphism
- * @param g - Second morphism
  */
-export function areComposable(f: CTMorphism, g: CTMorphism): boolean {
+export function areComposable(f: MorphismData, g: MorphismData): boolean {
   return f.targetId === g.sourceId;
 }
 
 /**
  * Check if two morphisms are the same (by signature).
- * @param a - First morphism
- * @param b - Second morphism
  */
-export function morphismsEqual(a: CTMorphism, b: CTMorphism): boolean {
+export function morphismsEqual(a: MorphismData, b: MorphismData): boolean {
   return a.signature.id === b.signature.id && a.signature.storeId === b.signature.storeId;
 }
+

@@ -2,8 +2,8 @@
 
 import { AbstractStore } from '../AbstractStore.js';
 import type { StoredCTC, StoreQuery, CreateOptions } from '../Store.interface.js';
-import type { CTCType, CTCData } from '../../types/index.js';
-import type { SignatureId } from '../../constructs/Signature.js';
+import type { CTCType, CTCInput } from '../../types/index.js';
+import type { SignatureId } from '../../data-constructs/Signature.js';
 
 export class MockStore extends AbstractStore {
   readonly id: string;
@@ -13,9 +13,9 @@ export class MockStore extends AbstractStore {
   readonly calls = {
     connect: [] as Array<{ args: [] }>,
     disconnect: [] as Array<{ args: [] }>,
-    create: [] as Array<{ args: [CTCType, CTCData, CreateOptions?] }>,
+    create: [] as Array<{ args: [CTCType, CTCInput, CreateOptions?] }>,
     read: [] as Array<{ args: [SignatureId] }>,
-    update: [] as Array<{ args: [SignatureId, CTCData, CreateOptions?] }>,
+    update: [] as Array<{ args: [SignatureId, CTCInput, CreateOptions?] }>,
     delete: [] as Array<{ args: [SignatureId] }>,
     list: [] as Array<{ args: [CTCType] }>,
     search: [] as Array<{ args: [StoreQuery] }>,
@@ -51,7 +51,7 @@ export class MockStore extends AbstractStore {
     this.constructs.clear();
   }
 
-  override async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+  override async create(type: CTCType, data: CTCInput, options?: CreateOptions): Promise<StoredCTC> {
     this.calls.create.push({ args: [type, data, options] });
     return super.create(type, data, options);
   }
@@ -61,7 +61,7 @@ export class MockStore extends AbstractStore {
     return super.read(id);
   }
 
-  override async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+  override async update(id: SignatureId, data: CTCInput, options?: CreateOptions): Promise<StoredCTC> {
     this.calls.update.push({ args: [id, data, options] });
     return super.update(id, data, options);
   }

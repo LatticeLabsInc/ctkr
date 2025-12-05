@@ -1,7 +1,7 @@
 // CTKR Client - main entry point for interacting with CTKR.
 
 import type { Store, StoredCTC, CreateOptions } from '../stores/Store.interface.js';
-import type { ClientConfig, StoreId, CTCType, CTCData } from '../types/index.js';
+import type { ClientConfig, StoreId, CTCType, CTCInput } from '../types/index.js';
 import { 
   ObjectType, 
   MorphismType, 
@@ -10,7 +10,7 @@ import {
   ObjectMappingType,
   MorphismMappingType,
 } from '../types/index.js';
-import type { SignatureId } from '../constructs/Signature.js';
+import type { SignatureId } from '../data-constructs/Signature.js';
 import { QueryEngine } from './QueryEngine.js';
 import { 
   RichCTC, 
@@ -19,7 +19,7 @@ import {
   RichMorphism, 
   RichFunctor,
   toRich 
-} from './RichConstructs.js';
+} from '../rich-constructs/index.js';
 
 export class Client {
   private stores: Map<StoreId, Store> = new Map();
@@ -90,7 +90,7 @@ export class Client {
    */
   async createCTC(
     type: CTCType,
-    data: CTCData,
+    data: CTCInput,
     store: Store,
     options?: CreateOptions
   ): Promise<StoredCTC> {
@@ -126,7 +126,7 @@ export class Client {
    */
   async updateCTC(
     id: SignatureId,
-    data: CTCData,
+    data: CTCInput,
     store: Store,
     options?: CreateOptions
   ): Promise<StoredCTC> {

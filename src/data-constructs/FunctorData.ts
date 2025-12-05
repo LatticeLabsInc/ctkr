@@ -1,4 +1,4 @@
-// Functor construct
+// FunctorData - data structure for a category-theoretic Functor
 //
 // In category theory, a Functor is a structure-preserving map between categories.
 // A functor F: C → D maps:
@@ -13,9 +13,9 @@ import type { Signature, SignatureId } from './Signature.js';
 import type { Metadata } from './Metadata.js';
 
 /**
- * Represents a category-theoretic Functor.
+ * Data structure representing a stored category-theoretic Functor.
  */
-export interface CTFunctor {
+export interface FunctorData {
   /** Unique signature identifying this functor */
   readonly signature: Signature;
   
@@ -52,9 +52,8 @@ export interface MorphismMapping {
 
 /**
  * Check if two functors are the same (by signature).
- * @param a - First functor
- * @param b - Second functor
  */
-export function functorsEqual(a: CTFunctor, b: CTFunctor): boolean {
+export function functorsEqual(a: FunctorData, b: FunctorData): boolean {
   return a.signature.id === b.signature.id && a.signature.storeId === b.signature.storeId;
 }
+

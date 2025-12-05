@@ -4,9 +4,9 @@
 // This enables CTKR to work with different storage backends (in-memory, disk, HTTP, SQL)
 // while maintaining a consistent API.
 
-import type { CTCType, CTCData } from '../types/index.js';
-import type { Signature, SignatureId } from '../constructs/Signature.js';
-import type { Metadata } from '../constructs/Metadata.js';
+import type { CTCType, CTCInput } from '../types/index.js';
+import type { Signature, SignatureId } from '../data-constructs/Signature.js';
+import type { Metadata } from '../data-constructs/Metadata.js';
 
 /**
  * Represents a stored category-theoretic construct.
@@ -22,7 +22,7 @@ export interface StoredCTC {
   type: CTCType;
   
   /** Construct-specific data */
-  data: CTCData;
+  data: CTCInput;
 }
 
 /**
@@ -59,7 +59,7 @@ export interface Store {
    * @param options - Optional name and description
    * @returns The created construct with its signature and metadata
    */
-  create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC>;
+  create(type: CTCType, data: CTCInput, options?: CreateOptions): Promise<StoredCTC>;
 
   /**
    * Read a construct by signature ID.
@@ -75,7 +75,7 @@ export interface Store {
    * @param options - Optional metadata updates (name, description)
    * @returns The updated construct with incremented version
    */
-  update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC>;
+  update(id: SignatureId, data: CTCInput, options?: CreateOptions): Promise<StoredCTC>;
 
   /**
    * Delete a construct.

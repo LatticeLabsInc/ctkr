@@ -1,4 +1,4 @@
-// Category construct
+// CategoryData - data structure for a category-theoretic Category
 //
 // In category theory, a Category consists of:
 // - A collection of objects
@@ -14,9 +14,9 @@ import type { Signature } from './Signature.js';
 import type { Metadata } from './Metadata.js';
 
 /**
- * Represents a category-theoretic Category.
+ * Data structure representing a stored category-theoretic Category.
  */
-export interface CTCategory {
+export interface CategoryData {
   /** Unique signature identifying this category */
   readonly signature: Signature;
   
@@ -29,9 +29,8 @@ export interface CTCategory {
 
 /**
  * Check if two categories are the same (by signature).
- * @param a - First category
- * @param b - Second category
  */
-export function categoriesEqual(a: CTCategory, b: CTCategory): boolean {
+export function categoriesEqual(a: CategoryData, b: CategoryData): boolean {
   return a.signature.id === b.signature.id && a.signature.storeId === b.signature.storeId;
 }
+

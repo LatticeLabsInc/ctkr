@@ -3,7 +3,7 @@
 
 import { AbstractStore } from './AbstractStore.js';
 import type { StoredCTC, BaseStoreConfig } from './Store.interface.js';
-import type { SignatureId } from '../constructs/Signature.js';
+import type { SignatureId } from '../data-constructs/Signature.js';
 
 export interface InMemoryStoreConfig extends BaseStoreConfig {
   name?: string;

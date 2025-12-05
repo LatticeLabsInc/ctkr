@@ -16,24 +16,27 @@ export interface ClientConfig {
   // TODO: Define client configuration options
 }
 
-// Data types for construct creation
-export interface ObjectData {
+// ─────────────────────────────────────────────────────────────────────────────
+// Creation data types - used when creating new constructs
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CreateObjectInput {
   categoryId?: string;
   properties?: Record<string, unknown>;
 }
 
-export interface MorphismData {
+export interface CreateMorphismInput {
   sourceId: string;
   targetId: string;
   categoryId?: string;
   properties?: Record<string, unknown>;
 }
 
-export interface CategoryData {
+export interface CreateCategoryInput {
   properties?: Record<string, unknown>;
 }
 
-export interface FunctorData {
+export interface CreateFunctorInput {
   sourceCategoryId: string;
   targetCategoryId: string;
   properties?: Record<string, unknown>;
@@ -43,7 +46,7 @@ export interface FunctorData {
  * Maps an object in the source category to an object in the target category.
  * Created as part of defining a functor.
  */
-export interface ObjectMappingData {
+export interface CreateObjectMappingInput {
   functorId: string;
   sourceObjectId: string;
   targetObjectId: string;
@@ -53,10 +56,17 @@ export interface ObjectMappingData {
  * Maps a morphism in the source category to a morphism in the target category.
  * Created as part of defining a functor.
  */
-export interface MorphismMappingData {
+export interface CreateMorphismMappingInput {
   functorId: string;
   sourceMorphismId: string;
   targetMorphismId: string;
 }
 
-export type CTCData = ObjectData | MorphismData | CategoryData | FunctorData | ObjectMappingData | MorphismMappingData | null;
+export type CTCInput = 
+  | CreateObjectInput 
+  | CreateMorphismInput 
+  | CreateCategoryInput 
+  | CreateFunctorInput 
+  | CreateObjectMappingInput 
+  | CreateMorphismMappingInput 
+  | null;

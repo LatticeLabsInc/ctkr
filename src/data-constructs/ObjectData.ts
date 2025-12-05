@@ -1,4 +1,4 @@
-// Object construct
+// ObjectData - data structure for a category-theoretic Object
 //
 // In category theory, an Object is a basic element of a category.
 // Objects are abstract entities that can be the source or target of morphisms.
@@ -7,9 +7,9 @@ import type { Signature } from './Signature.js';
 import type { Metadata } from './Metadata.js';
 
 /**
- * Represents a category-theoretic Object.
+ * Data structure representing a stored category-theoretic Object.
  */
-export interface CTObject {
+export interface ObjectData {
   /** Unique signature identifying this object */
   readonly signature: Signature;
   
@@ -25,9 +25,8 @@ export interface CTObject {
 
 /**
  * Check if two objects are the same (by signature).
- * @param a - First object
- * @param b - Second object
  */
-export function objectsEqual(a: CTObject, b: CTObject): boolean {
+export function objectsEqual(a: ObjectData, b: ObjectData): boolean {
   return a.signature.id === b.signature.id && a.signature.storeId === b.signature.storeId;
 }
+

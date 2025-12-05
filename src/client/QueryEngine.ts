@@ -4,19 +4,18 @@
 // such as finding all morphisms from an object, or all objects in a category.
 
 import type { Store, StoredCTC } from '../stores/Store.interface.js';
-import type { SignatureId } from '../constructs/Signature.js';
+import type { SignatureId } from '../data-constructs/Signature.js';
 import { 
   ObjectType, 
   MorphismType, 
-  CategoryType, 
   FunctorType, 
   ObjectMappingType, 
   MorphismMappingType,
-  type MorphismData,
-  type ObjectData,
-  type FunctorData,
-  type ObjectMappingData,
-  type MorphismMappingData,
+  type CreateMorphismInput,
+  type CreateObjectInput,
+  type CreateFunctorInput,
+  type CreateObjectMappingInput,
+  type CreateMorphismMappingInput,
 } from '../types/index.js';
 
 /**
@@ -37,7 +36,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const objects = await store.list(ObjectType);
       for (const obj of objects) {
-        const data = obj.data as ObjectData | null;
+        const data = obj.data as CreateObjectInput | null;
         if (data?.categoryId === categoryId) {
           results.push(obj);
         }
@@ -53,7 +52,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const obj = await store.read(objectId);
       if (obj && obj.type === ObjectType) {
-        const data = obj.data as ObjectData | null;
+        const data = obj.data as CreateObjectInput | null;
         if (data?.categoryId === categoryId) {
           return obj;
         }
@@ -70,7 +69,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const morphisms = await store.list(MorphismType);
       for (const mor of morphisms) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.categoryId === categoryId) {
           results.push(mor);
         }
@@ -86,7 +85,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const mor = await store.read(morphismId);
       if (mor && mor.type === MorphismType) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.categoryId === categoryId) {
           return mor;
         }
@@ -103,7 +102,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const functors = await store.list(FunctorType);
       for (const fun of functors) {
-        const data = fun.data as FunctorData | null;
+        const data = fun.data as CreateFunctorInput | null;
         if (data?.sourceCategoryId === categoryId) {
           results.push(fun);
         }
@@ -120,7 +119,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const functors = await store.list(FunctorType);
       for (const fun of functors) {
-        const data = fun.data as FunctorData | null;
+        const data = fun.data as CreateFunctorInput | null;
         if (data?.targetCategoryId === categoryId) {
           results.push(fun);
         }
@@ -141,7 +140,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const morphisms = await store.list(MorphismType);
       for (const mor of morphisms) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.sourceId === objectId) {
           results.push(mor);
         }
@@ -158,7 +157,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const morphisms = await store.list(MorphismType);
       for (const mor of morphisms) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.targetId === objectId) {
           results.push(mor);
         }
@@ -174,7 +173,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const obj = await store.read(objectId);
       if (obj && obj.type === ObjectType) {
-        const data = obj.data as ObjectData | null;
+        const data = obj.data as CreateObjectInput | null;
         if (data?.categoryId) {
           const category = await store.read(data.categoryId);
           if (category) return category;
@@ -185,7 +184,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const obj = await store.read(objectId);
       if (obj && obj.type === ObjectType) {
-        const data = obj.data as ObjectData | null;
+        const data = obj.data as CreateObjectInput | null;
         if (data?.categoryId) {
           for (const s of this.stores) {
             const category = await s.read(data.categoryId);
@@ -208,7 +207,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const mor = await store.read(morphismId);
       if (mor && mor.type === MorphismType) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.sourceId) {
           for (const s of this.stores) {
             const obj = await s.read(data.sourceId);
@@ -227,7 +226,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const mor = await store.read(morphismId);
       if (mor && mor.type === MorphismType) {
-        const data = mor.data as MorphismData | null;
+        const data = mor.data as CreateMorphismInput | null;
         if (data?.targetId) {
           for (const s of this.stores) {
             const obj = await s.read(data.targetId);
@@ -250,7 +249,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const fun = await store.read(functorId);
       if (fun && fun.type === FunctorType) {
-        const data = fun.data as FunctorData | null;
+        const data = fun.data as CreateFunctorInput | null;
         if (data?.sourceCategoryId) {
           for (const s of this.stores) {
             const cat = await s.read(data.sourceCategoryId);
@@ -269,7 +268,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const fun = await store.read(functorId);
       if (fun && fun.type === FunctorType) {
-        const data = fun.data as FunctorData | null;
+        const data = fun.data as CreateFunctorInput | null;
         if (data?.targetCategoryId) {
           for (const s of this.stores) {
             const cat = await s.read(data.targetCategoryId);
@@ -289,7 +288,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const mappings = await store.list(ObjectMappingType);
       for (const mapping of mappings) {
-        const data = mapping.data as ObjectMappingData | null;
+        const data = mapping.data as CreateObjectMappingInput | null;
         if (data?.functorId === functorId) {
           results.push(mapping);
         }
@@ -306,7 +305,7 @@ export class QueryEngine {
     for (const store of this.stores) {
       const mappings = await store.list(MorphismMappingType);
       for (const mapping of mappings) {
-        const data = mapping.data as MorphismMappingData | null;
+        const data = mapping.data as CreateMorphismMappingInput | null;
         if (data?.functorId === functorId) {
           results.push(mapping);
         }
@@ -323,7 +322,7 @@ export class QueryEngine {
     const results: StoredCTC[] = [];
     
     for (const mapping of mappings) {
-      const data = mapping.data as ObjectMappingData;
+      const data = mapping.data as CreateObjectMappingInput;
       for (const store of this.stores) {
         const obj = await store.read(data.sourceObjectId);
         if (obj) {
@@ -344,7 +343,7 @@ export class QueryEngine {
     const seen = new Set<string>();
     
     for (const mapping of mappings) {
-      const data = mapping.data as ObjectMappingData;
+      const data = mapping.data as CreateObjectMappingInput;
       if (seen.has(data.targetObjectId)) continue;
       seen.add(data.targetObjectId);
       
@@ -366,7 +365,7 @@ export class QueryEngine {
     const mappings = await this.getObjectMappings(functorId);
     
     for (const mapping of mappings) {
-      const data = mapping.data as ObjectMappingData;
+      const data = mapping.data as CreateObjectMappingInput;
       if (data.sourceObjectId === sourceObjectId) {
         for (const store of this.stores) {
           const obj = await store.read(data.targetObjectId);
@@ -385,7 +384,7 @@ export class QueryEngine {
     const results: StoredCTC[] = [];
     
     for (const mapping of mappings) {
-      const data = mapping.data as ObjectMappingData;
+      const data = mapping.data as CreateObjectMappingInput;
       if (data.targetObjectId === targetObjectId) {
         for (const store of this.stores) {
           const obj = await store.read(data.sourceObjectId);
@@ -407,7 +406,7 @@ export class QueryEngine {
     const results: StoredCTC[] = [];
     
     for (const mapping of mappings) {
-      const data = mapping.data as MorphismMappingData;
+      const data = mapping.data as CreateMorphismMappingInput;
       for (const store of this.stores) {
         const mor = await store.read(data.sourceMorphismId);
         if (mor) {
@@ -428,7 +427,7 @@ export class QueryEngine {
     const seen = new Set<string>();
     
     for (const mapping of mappings) {
-      const data = mapping.data as MorphismMappingData;
+      const data = mapping.data as CreateMorphismMappingInput;
       if (seen.has(data.targetMorphismId)) continue;
       seen.add(data.targetMorphismId);
       
@@ -450,7 +449,7 @@ export class QueryEngine {
     const mappings = await this.getMorphismMappings(functorId);
     
     for (const mapping of mappings) {
-      const data = mapping.data as MorphismMappingData;
+      const data = mapping.data as CreateMorphismMappingInput;
       if (data.sourceMorphismId === sourceMorphismId) {
         for (const store of this.stores) {
           const mor = await store.read(data.targetMorphismId);
@@ -469,7 +468,7 @@ export class QueryEngine {
     const results: StoredCTC[] = [];
     
     for (const mapping of mappings) {
-      const data = mapping.data as MorphismMappingData;
+      const data = mapping.data as CreateMorphismMappingInput;
       if (data.targetMorphismId === targetMorphismId) {
         for (const store of this.stores) {
           const mor = await store.read(data.sourceMorphismId);

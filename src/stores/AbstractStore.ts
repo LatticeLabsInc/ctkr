@@ -7,10 +7,10 @@
 // - _getAll: Get all constructs from storage
 
 import type { Store, StoredCTC, StoreQuery, CreateOptions } from './Store.interface.js';
-import type { CTCType, CTCData } from '../types/index.js';
-import type { SignatureId } from '../constructs/Signature.js';
-import { createSignature, incrementVersion } from '../constructs/Signature.js';
-import { createMetadata, updateMetadata } from '../constructs/Metadata.js';
+import type { CTCType, CTCInput } from '../types/index.js';
+import type { SignatureId } from '../data-constructs/Signature.js';
+import { createSignature, incrementVersion } from '../data-constructs/Signature.js';
+import { createMetadata, updateMetadata } from '../data-constructs/Metadata.js';
 
 /**
  * Abstract base class for Store implementations.
@@ -41,7 +41,7 @@ export abstract class AbstractStore implements Store {
   /**
    * Create a new construct in the store.
    */
-  async create(type: CTCType, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+  async create(type: CTCType, data: CTCInput, options?: CreateOptions): Promise<StoredCTC> {
     const signature = createSignature(this.id);
     const metadata = createMetadata({
       name: options?.name,
@@ -69,7 +69,7 @@ export abstract class AbstractStore implements Store {
   /**
    * Update an existing construct.
    */
-  async update(id: SignatureId, data: CTCData, options?: CreateOptions): Promise<StoredCTC> {
+  async update(id: SignatureId, data: CTCInput, options?: CreateOptions): Promise<StoredCTC> {
     const existing = await this._retrieve(id);
     if (!existing) {
       throw new Error(`Construct not found: ${id}`);
@@ -145,4 +145,3 @@ export abstract class AbstractStore implements Store {
    */
   protected abstract _getAll(): Promise<StoredCTC[]>;
 }
-
