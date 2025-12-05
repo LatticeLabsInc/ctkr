@@ -502,6 +502,14 @@ export class Client {
   }
 
   /**
+   * Access the query engine for relational queries.
+   * @returns QueryEngine instance
+   */
+  query(): QueryEngine {
+    return this.queryEngine;
+  }
+
+  /**
    * Access semantic operations for higher-level construct manipulation.
    * @returns SemanticOperations instance
    */

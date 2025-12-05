@@ -5,6 +5,7 @@ export * from './client/Client.js';
 export * from './data-constructs/index.js';
 export * from './rich-constructs/index.js';
 export * from './stores/index.js';
+export * from './builder-constructs/index.js';
 
 // Re-export type constants at top level for convenience
 export { 

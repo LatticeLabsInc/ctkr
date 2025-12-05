@@ -17,13 +17,17 @@
       "types": "./dist/stores/*.d.ts",
       "import": "./dist/stores/*.js"
     },
-    "./constructs": {
-      "types": "./dist/constructs/index.d.ts",
-      "import": "./dist/constructs/index.js"
+    "./data-constructs": {
+      "types": "./dist/data-constructs/index.d.ts",
+      "import": "./dist/data-constructs/index.js"
     },
-    "./constructs/*": {
-      "types": "./dist/constructs/*.d.ts",
-      "import": "./dist/constructs/*.js"
+    "./rich-constructs": {
+      "types": "./dist/rich-constructs/index.d.ts",
+      "import": "./dist/rich-constructs/index.js"
+    },
+    "./builder-constructs": {
+      "types": "./dist/builder-constructs/index.d.ts",
+      "import": "./dist/builder-constructs/index.js"
     }
   },
   "scripts": {

@@ -123,5 +123,21 @@ export class RichFunctor extends RichCTC {
     const sources = await this.queryEngine.getSourceMorphismsForTarget(this.signature.id, targetId);
     return sources.map(m => new RichMorphism(m, this.queryEngine));
   }
+
+  /**
+   * Get all object mappings for this functor.
+   * Returns the raw ObjectMapping StoredCTC objects.
+   */
+  async getObjectMappings(): Promise<StoredCTC[]> {
+    return this.queryEngine.getObjectMappings(this.signature.id);
+  }
+
+  /**
+   * Get all morphism mappings for this functor.
+   * Returns the raw MorphismMapping StoredCTC objects.
+   */
+  async getMorphismMappings(): Promise<StoredCTC[]> {
+    return this.queryEngine.getMorphismMappings(this.signature.id);
+  }
 }
 
