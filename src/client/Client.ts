@@ -24,6 +24,13 @@ import {
   RichFunctor,
   toRich 
 } from '../rich-constructs/index.js';
+import {
+  CategoryBuilder,
+  ObjectBuilder,
+  MorphismBuilder,
+  FunctorBuilder,
+  type Builder,
+} from '../builder-constructs/index.js';
 
 export class Client {
   private stores: Map<StoreId, Store> = new Map();
@@ -515,6 +522,71 @@ export class Client {
    */
   semantic(): SemanticOperations {
     return new SemanticOperations(this);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Builder access
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get a builder for creating a Category.
+   * Builders provide validation and a fluent API for construct creation.
+   * 
+   * @example
+   * const category = await client.categoryBuilder()
+   *   .inStore(store)
+   *   .withName('MyCategory')
+   *   .build();
+   */
+  categoryBuilder(): CategoryBuilder {
+    return new CategoryBuilder(this);
+  }
+
+  /**
+   * Get a builder for creating an Object.
+   * 
+   * @example
+   * const obj = await client.objectBuilder()
+   *   .inStore(store)
+   *   .inCategory(category)
+   *   .withName('MyObject')
+   *   .build();
+   */
+  objectBuilder(): ObjectBuilder {
+    return new ObjectBuilder(this);
+  }
+
+  /**
+   * Get a builder for creating a Morphism.
+   * 
+   * @example
+   * const morphism = await client.morphismBuilder()
+   *   .inStore(store)
+   *   .fromObject(A)
+   *   .toObject(B)
+   *   .withName('f')
+   *   .build();
+   */
+  morphismBuilder(): MorphismBuilder {
+    return new MorphismBuilder(this);
+  }
+
+  /**
+   * Get a builder for creating a Functor.
+   * FunctorBuilder provides constraint validation and automatic derivation
+   * of object mappings from morphism mappings.
+   * 
+   * @example
+   * const functor = await client.functorBuilder()
+   *   .inStore(store)
+   *   .sourceCategory(C)
+   *   .targetCategory(D)
+   *   .mapMorphism(f, g)  // Automatically derives object mappings
+   *   .withName('F')
+   *   .build();
+   */
+  functorBuilder(): FunctorBuilder {
+    return new FunctorBuilder(this);
   }
 }
 
