@@ -2,17 +2,17 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Client } from '../Client.js';
-import { InMemoryStore } from '../../stores/InMemoryStore.js';
+import { MockStore } from '../../stores/mocks/MockStore.js';
 import type { RichCategory, RichObject, RichMorphism } from '../../rich-constructs/index.js';
 import type { CreateObjectMappingInput, CreateMorphismMappingInput } from '../../types/index.js';
 
 describe('SemanticOperations', () => {
   let client: Client;
-  let store: InMemoryStore;
+  let store: MockStore;
 
   beforeEach(() => {
     client = new Client();
-    store = new InMemoryStore({ id: 'test-store', name: 'Test Store' });
+    store = new MockStore('test-store');
     client.attachStore(store);
   });
 
@@ -314,7 +314,7 @@ describe('SemanticOperations', () => {
       });
 
       it('can use different stores for category and functor', async () => {
-        const store2 = new InMemoryStore({ id: 'store-2', name: 'Store 2' });
+        const store2 = new MockStore('store-2');
         client.attachStore(store2);
 
         const result = await client.semantic().extract(
