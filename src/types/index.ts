@@ -23,6 +23,9 @@ export interface ClientConfig {
 export interface CreateObjectInput {
   categoryId?: string;
   properties?: Record<string, unknown>;
+  // Bidirectional pointers (maintained by Client)
+  morphismsFromIds?: string[];
+  morphismsToIds?: string[];
 }
 
 export interface CreateMorphismInput {
@@ -34,12 +37,20 @@ export interface CreateMorphismInput {
 
 export interface CreateCategoryInput {
   properties?: Record<string, unknown>;
+  // Bidirectional pointers (maintained by Client)
+  objectIds?: string[];
+  morphismIds?: string[];
+  functorsFromIds?: string[];
+  functorsToIds?: string[];
 }
 
 export interface CreateFunctorInput {
   sourceCategoryId: string;
   targetCategoryId: string;
   properties?: Record<string, unknown>;
+  // Bidirectional pointers (maintained by Client)
+  objectMappingIds?: string[];
+  morphismMappingIds?: string[];
 }
 
 /**

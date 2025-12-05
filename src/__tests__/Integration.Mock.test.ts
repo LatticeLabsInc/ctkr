@@ -514,11 +514,14 @@ describe('Integration (MockStore)', () => {
       expect(store1.calls.read[0].args[0]).toBe(cat.signature.id);
     });
 
-    it('tracks list calls during queries', async () => {
+    it('tracks read calls during queries (uses embedded pointers)', async () => {
       const cat = await client.createCategory(store1, { name: 'Test' });
+      const initialReadCount = store1.calls.read.length;
+      
       await cat.getObjects();
       
-      expect(store1.calls.list.length).toBeGreaterThan(0);
+      // With embedded pointers, we read the category to get objectIds, not list all objects
+      expect(store1.calls.read.length).toBeGreaterThan(initialReadCount);
     });
   });
 

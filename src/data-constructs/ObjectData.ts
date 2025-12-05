@@ -21,6 +21,16 @@ export interface ObjectData {
   
   /** Additional custom properties */
   readonly properties?: Record<string, unknown>;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Bidirectional pointers (maintained automatically by Client)
+  // ─────────────────────────────────────────────────────────────────────────────
+  
+  /** IDs of all morphisms where this object is the source */
+  readonly morphismsFromIds?: string[];
+  
+  /** IDs of all morphisms where this object is the target */
+  readonly morphismsToIds?: string[];
 }
 
 /**

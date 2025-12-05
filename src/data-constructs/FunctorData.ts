@@ -30,6 +30,16 @@ export interface FunctorData {
   
   /** Additional custom properties */
   readonly properties?: Record<string, unknown>;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Bidirectional pointers (maintained automatically by Client)
+  // ─────────────────────────────────────────────────────────────────────────────
+  
+  /** IDs of all object mappings for this functor */
+  readonly objectMappingIds?: string[];
+  
+  /** IDs of all morphism mappings for this functor */
+  readonly morphismMappingIds?: string[];
 }
 
 /**

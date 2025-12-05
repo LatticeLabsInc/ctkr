@@ -25,6 +25,22 @@ export interface CategoryData {
   
   /** Additional custom properties */
   readonly properties?: Record<string, unknown>;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Bidirectional pointers (maintained automatically by Client)
+  // ─────────────────────────────────────────────────────────────────────────────
+  
+  /** IDs of all objects in this category */
+  readonly objectIds?: string[];
+  
+  /** IDs of all morphisms in this category */
+  readonly morphismIds?: string[];
+  
+  /** IDs of all functors where this category is the source */
+  readonly functorsFromIds?: string[];
+  
+  /** IDs of all functors where this category is the target */
+  readonly functorsToIds?: string[];
 }
 
 /**

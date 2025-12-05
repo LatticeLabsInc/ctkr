@@ -30,17 +30,19 @@ export class QueryEngine {
 
   /**
    * Get all objects in a category.
+   * Uses embedded objectIds pointer for O(k) lookup where k = number of objects.
    */
   async getObjectsInCategory(categoryId: SignatureId): Promise<StoredCTC[]> {
+    const category = await this.get(categoryId);
+    if (!category) return [];
+    
+    const data = category.data as Record<string, unknown> | null;
+    const objectIds = (data?.objectIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const objects = await store.list(ObjectType);
-      for (const obj of objects) {
-        const data = obj.data as CreateObjectInput | null;
-        if (data?.categoryId === categoryId) {
-          results.push(obj);
-        }
-      }
+    for (const objectId of objectIds) {
+      const obj = await this.get(objectId);
+      if (obj) results.push(obj);
     }
     return results;
   }
@@ -63,17 +65,19 @@ export class QueryEngine {
 
   /**
    * Get all morphisms in a category.
+   * Uses embedded morphismIds pointer for O(k) lookup where k = number of morphisms.
    */
   async getMorphismsInCategory(categoryId: SignatureId): Promise<StoredCTC[]> {
+    const category = await this.get(categoryId);
+    if (!category) return [];
+    
+    const data = category.data as Record<string, unknown> | null;
+    const morphismIds = (data?.morphismIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const morphisms = await store.list(MorphismType);
-      for (const mor of morphisms) {
-        const data = mor.data as CreateMorphismInput | null;
-        if (data?.categoryId === categoryId) {
-          results.push(mor);
-        }
-      }
+    for (const morphismId of morphismIds) {
+      const mor = await this.get(morphismId);
+      if (mor) results.push(mor);
     }
     return results;
   }
@@ -96,34 +100,38 @@ export class QueryEngine {
 
   /**
    * Get all functors from this category (as source).
+   * Uses embedded functorsFromIds pointer for O(k) lookup.
    */
   async getFunctorsFromCategory(categoryId: SignatureId): Promise<StoredCTC[]> {
+    const category = await this.get(categoryId);
+    if (!category) return [];
+    
+    const data = category.data as Record<string, unknown> | null;
+    const functorIds = (data?.functorsFromIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const functors = await store.list(FunctorType);
-      for (const fun of functors) {
-        const data = fun.data as CreateFunctorInput | null;
-        if (data?.sourceCategoryId === categoryId) {
-          results.push(fun);
-        }
-      }
+    for (const functorId of functorIds) {
+      const fun = await this.get(functorId);
+      if (fun) results.push(fun);
     }
     return results;
   }
 
   /**
    * Get all functors to this category (as target).
+   * Uses embedded functorsToIds pointer for O(k) lookup.
    */
   async getFunctorsToCategory(categoryId: SignatureId): Promise<StoredCTC[]> {
+    const category = await this.get(categoryId);
+    if (!category) return [];
+    
+    const data = category.data as Record<string, unknown> | null;
+    const functorIds = (data?.functorsToIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const functors = await store.list(FunctorType);
-      for (const fun of functors) {
-        const data = fun.data as CreateFunctorInput | null;
-        if (data?.targetCategoryId === categoryId) {
-          results.push(fun);
-        }
-      }
+    for (const functorId of functorIds) {
+      const fun = await this.get(functorId);
+      if (fun) results.push(fun);
     }
     return results;
   }
@@ -134,34 +142,38 @@ export class QueryEngine {
 
   /**
    * Get all morphisms from this object (as source).
+   * Uses embedded morphismsFromIds pointer for O(k) lookup.
    */
   async getMorphismsFromObject(objectId: SignatureId): Promise<StoredCTC[]> {
+    const obj = await this.get(objectId);
+    if (!obj) return [];
+    
+    const data = obj.data as Record<string, unknown> | null;
+    const morphismIds = (data?.morphismsFromIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const morphisms = await store.list(MorphismType);
-      for (const mor of morphisms) {
-        const data = mor.data as CreateMorphismInput | null;
-        if (data?.sourceId === objectId) {
-          results.push(mor);
-        }
-      }
+    for (const morphismId of morphismIds) {
+      const mor = await this.get(morphismId);
+      if (mor) results.push(mor);
     }
     return results;
   }
 
   /**
    * Get all morphisms to this object (as target).
+   * Uses embedded morphismsToIds pointer for O(k) lookup.
    */
   async getMorphismsToObject(objectId: SignatureId): Promise<StoredCTC[]> {
+    const obj = await this.get(objectId);
+    if (!obj) return [];
+    
+    const data = obj.data as Record<string, unknown> | null;
+    const morphismIds = (data?.morphismsToIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const morphisms = await store.list(MorphismType);
-      for (const mor of morphisms) {
-        const data = mor.data as CreateMorphismInput | null;
-        if (data?.targetId === objectId) {
-          results.push(mor);
-        }
-      }
+    for (const morphismId of morphismIds) {
+      const mor = await this.get(morphismId);
+      if (mor) results.push(mor);
     }
     return results;
   }
@@ -282,34 +294,38 @@ export class QueryEngine {
 
   /**
    * Get all object mappings for a functor.
+   * Uses embedded objectMappingIds pointer for O(k) lookup.
    */
   async getObjectMappings(functorId: SignatureId): Promise<StoredCTC[]> {
+    const functor = await this.get(functorId);
+    if (!functor) return [];
+    
+    const data = functor.data as Record<string, unknown> | null;
+    const mappingIds = (data?.objectMappingIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const mappings = await store.list(ObjectMappingType);
-      for (const mapping of mappings) {
-        const data = mapping.data as CreateObjectMappingInput | null;
-        if (data?.functorId === functorId) {
-          results.push(mapping);
-        }
-      }
+    for (const mappingId of mappingIds) {
+      const mapping = await this.get(mappingId);
+      if (mapping) results.push(mapping);
     }
     return results;
   }
 
   /**
    * Get all morphism mappings for a functor.
+   * Uses embedded morphismMappingIds pointer for O(k) lookup.
    */
   async getMorphismMappings(functorId: SignatureId): Promise<StoredCTC[]> {
+    const functor = await this.get(functorId);
+    if (!functor) return [];
+    
+    const data = functor.data as Record<string, unknown> | null;
+    const mappingIds = (data?.morphismMappingIds as string[] | undefined) ?? [];
+    
     const results: StoredCTC[] = [];
-    for (const store of this.stores) {
-      const mappings = await store.list(MorphismMappingType);
-      for (const mapping of mappings) {
-        const data = mapping.data as CreateMorphismMappingInput | null;
-        if (data?.functorId === functorId) {
-          results.push(mapping);
-        }
-      }
+    for (const mappingId of mappingIds) {
+      const mapping = await this.get(mappingId);
+      if (mapping) results.push(mapping);
     }
     return results;
   }

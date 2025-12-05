@@ -9,6 +9,9 @@ import {
   FunctorType,
   ObjectMappingType,
   MorphismMappingType,
+  type CreateCategoryInput,
+  type CreateObjectInput,
+  type CreateFunctorInput,
 } from '../types/index.js';
 import type { SignatureId } from '../data-constructs/Signature.js';
 import { QueryEngine } from './QueryEngine.js';
@@ -45,6 +48,72 @@ export class Client {
    */
   private invalidateQueryEngine(): void {
     this._queryEngine = null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Private helpers for maintaining bidirectional pointers
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Add an ID to an array field of a construct's data.
+   * Used to maintain bidirectional pointers.
+   */
+  private async addIdToArray(
+    id: SignatureId,
+    store: Store,
+    field: string,
+    newId: string
+  ): Promise<void> {
+    const existing = await store.read(id);
+    if (!existing) return;
+
+    const data = existing.data as Record<string, unknown> | null;
+    const currentArray = (data?.[field] as string[] | undefined) ?? [];
+    
+    // Avoid duplicates
+    if (currentArray.includes(newId)) return;
+
+    const updatedData = {
+      ...data,
+      [field]: [...currentArray, newId],
+    };
+    
+    await store.update(id, updatedData as CTCInput);
+  }
+
+  /**
+   * Remove an ID from an array field of a construct's data.
+   * Used to maintain bidirectional pointers.
+   */
+  private async removeIdFromArray(
+    id: SignatureId,
+    store: Store,
+    field: string,
+    removeId: string
+  ): Promise<void> {
+    const existing = await store.read(id);
+    if (!existing) return;
+
+    const data = existing.data as Record<string, unknown> | null;
+    const currentArray = (data?.[field] as string[] | undefined) ?? [];
+    
+    const updatedData = {
+      ...data,
+      [field]: currentArray.filter(x => x !== removeId),
+    };
+    
+    await store.update(id, updatedData as CTCInput);
+  }
+
+  /**
+   * Find which store contains a given construct.
+   */
+  private async findStoreFor(id: SignatureId): Promise<Store | undefined> {
+    for (const store of this.stores.values()) {
+      const result = await store.read(id);
+      if (result) return store;
+    }
+    return undefined;
   }
 
   /**
@@ -160,7 +229,13 @@ export class Client {
     store: Store,
     options?: CreateOptions & { properties?: Record<string, unknown> }
   ): Promise<RichCategory> {
-    const data = options?.properties ? { properties: options.properties } : null;
+    const data: CreateCategoryInput = {
+      properties: options?.properties,
+      objectIds: [],
+      morphismIds: [],
+      functorsFromIds: [],
+      functorsToIds: [],
+    };
     const stored = await this.createCTC(CategoryType, data, store, options);
     return new RichCategory(stored, this.queryEngine);
   }
@@ -176,11 +251,20 @@ export class Client {
     const categoryId = category 
       ? (typeof category === 'string' ? category : category.signature.id)
       : undefined;
-    const data = { 
+    const data: CreateObjectInput = { 
       categoryId,
       properties: options?.properties,
+      morphismsFromIds: [],
+      morphismsToIds: [],
     };
     const stored = await this.createCTC(ObjectType, data, store, options);
+    
+    // Maintain bidirectional pointer: add object ID to category's objectIds
+    if (categoryId) {
+      const categoryStore = await this.findStoreFor(categoryId) ?? store;
+      await this.addIdToArray(categoryId, categoryStore, 'objectIds', stored.signature.id);
+    }
+    
     return new RichObject(stored, this.queryEngine);
   }
 
@@ -206,6 +290,23 @@ export class Client {
       properties: options?.properties,
     };
     const stored = await this.createCTC(MorphismType, data, store, options);
+    const morphismId = stored.signature.id;
+    
+    // Maintain bidirectional pointers
+    // 1. Add morphism ID to category's morphismIds
+    if (categoryId) {
+      const categoryStore = await this.findStoreFor(categoryId) ?? store;
+      await this.addIdToArray(categoryId, categoryStore, 'morphismIds', morphismId);
+    }
+    
+    // 2. Add morphism ID to source object's morphismsFromIds
+    const sourceStore = await this.findStoreFor(sourceId) ?? store;
+    await this.addIdToArray(sourceId, sourceStore, 'morphismsFromIds', morphismId);
+    
+    // 3. Add morphism ID to target object's morphismsToIds
+    const targetStore = await this.findStoreFor(targetId) ?? store;
+    await this.addIdToArray(targetId, targetStore, 'morphismsToIds', morphismId);
+    
     return new RichMorphism(stored, this.queryEngine);
   }
 
@@ -220,12 +321,25 @@ export class Client {
   ): Promise<RichFunctor> {
     const sourceCategoryId = typeof source === 'string' ? source : source.signature.id;
     const targetCategoryId = typeof target === 'string' ? target : target.signature.id;
-    const data = {
+    const data: CreateFunctorInput = {
       sourceCategoryId,
       targetCategoryId,
       properties: options?.properties,
+      objectMappingIds: [],
+      morphismMappingIds: [],
     };
     const stored = await this.createCTC(FunctorType, data, store, options);
+    const functorId = stored.signature.id;
+    
+    // Maintain bidirectional pointers
+    // 1. Add functor ID to source category's functorsFromIds
+    const sourceStore = await this.findStoreFor(sourceCategoryId) ?? store;
+    await this.addIdToArray(sourceCategoryId, sourceStore, 'functorsFromIds', functorId);
+    
+    // 2. Add functor ID to target category's functorsToIds
+    const targetStore = await this.findStoreFor(targetCategoryId) ?? store;
+    await this.addIdToArray(targetCategoryId, targetStore, 'functorsToIds', functorId);
+    
     return new RichFunctor(stored, this.queryEngine);
   }
 
@@ -246,7 +360,13 @@ export class Client {
       sourceObjectId,
       targetObjectId,
     };
-    return this.createCTC(ObjectMappingType, data, store);
+    const stored = await this.createCTC(ObjectMappingType, data, store);
+    
+    // Maintain bidirectional pointer: add mapping ID to functor's objectMappingIds
+    const functorStore = await this.findStoreFor(functorId) ?? store;
+    await this.addIdToArray(functorId, functorStore, 'objectMappingIds', stored.signature.id);
+    
+    return stored;
   }
 
   /**
@@ -266,7 +386,13 @@ export class Client {
       sourceMorphismId,
       targetMorphismId,
     };
-    return this.createCTC(MorphismMappingType, data, store);
+    const stored = await this.createCTC(MorphismMappingType, data, store);
+    
+    // Maintain bidirectional pointer: add mapping ID to functor's morphismMappingIds
+    const functorStore = await this.findStoreFor(functorId) ?? store;
+    await this.addIdToArray(functorId, functorStore, 'morphismMappingIds', stored.signature.id);
+    
+    return stored;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
