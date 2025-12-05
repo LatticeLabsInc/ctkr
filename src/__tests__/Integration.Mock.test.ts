@@ -5,17 +5,17 @@ import {
   RichObject, 
   RichMorphism, 
   RichFunctor 
-} from '../Client.js';
-import { InMemoryStore } from '../../stores/InMemoryStore.js';
+} from '../client/Client.js';
+import { MockStore } from '../stores/mocks/MockStore.js';
 import { 
   ObjectType, 
   MorphismType, 
   CategoryType, 
   FunctorType 
-} from '../../types/index.js';
+} from '../types/index.js';
 
 /**
- * Integration tests for CTKR Client.
+ * Integration tests using MockStore.
  * 
  * These tests exercise the full API including:
  * - Multiple stores
@@ -24,15 +24,15 @@ import {
  * - Rich construct query methods
  * - MetaQuery for finding constructs
  */
-describe('Client Integration', () => {
+describe('Integration (MockStore)', () => {
   let client: Client;
-  let store1: InMemoryStore;
-  let store2: InMemoryStore;
+  let store1: MockStore;
+  let store2: MockStore;
 
   beforeEach(() => {
     client = new Client();
-    store1 = new InMemoryStore({ id: 'store-1', name: 'Primary Store' });
-    store2 = new InMemoryStore({ id: 'store-2', name: 'Secondary Store' });
+    store1 = new MockStore('store-1');
+    store2 = new MockStore('store-2');
     client.attachStore(store1);
     client.attachStore(store2);
   });
@@ -383,11 +383,11 @@ describe('Client Integration', () => {
         intType, stringType, store1, types, 
         { name: 'toString', description: 'Convert Int to String' }
       );
-      const boolToString = await client.createMorphism(
+      await client.createMorphism(
         boolType, stringType, store1, types,
         { name: 'boolToString' }
       );
-      const intToBool = await client.createMorphism(
+      await client.createMorphism(
         intType, boolType, store1, types,
         { name: 'toBool', description: 'Zero is false, non-zero is true' }
       );
@@ -421,11 +421,11 @@ describe('Client Integration', () => {
       // Module A with exports
       const moduleA = await client.createCategory(store1, { name: 'ModuleA' });
       const funcA1 = await client.createObject(store1, moduleA, { name: 'helper' });
-      const funcA2 = await client.createObject(store1, moduleA, { name: 'compute' });
+      await client.createObject(store1, moduleA, { name: 'compute' });
       
       // Module B with its own functions
       const moduleB = await client.createCategory(store1, { name: 'ModuleB' });
-      const funcB1 = await client.createObject(store1, moduleB, { name: 'process' });
+      await client.createObject(store1, moduleB, { name: 'process' });
       
       // Import functor: B imports from A
       const importFunctor = await client.createFunctor(moduleA, moduleB, store1, { 
@@ -498,28 +498,27 @@ describe('Client Integration', () => {
     });
   });
 
-  describe('Version and Signature Tracking', () => {
-    it('tracks versions across updates', async () => {
-      const cat = await client.createCategory(store1, { name: 'Original' });
-      expect(cat.signature.version).toBe(1);
+  describe('MockStore-specific: Call Tracking', () => {
+    it('tracks create calls', async () => {
+      await client.createCategory(store1, { name: 'Test' });
       
-      const stored = await store1.update(cat.signature.id, null, { name: 'Updated' });
-      expect(stored.signature.version).toBe(2);
-      
-      const stored2 = await store1.update(cat.signature.id, null, { name: 'Updated Again' });
-      expect(stored2.signature.version).toBe(3);
+      expect(store1.calls.create).toHaveLength(1);
+      expect(store1.calls.create[0].args[0]).toBe(CategoryType);
     });
 
-    it('maintains store ID across operations', async () => {
+    it('tracks read calls', async () => {
       const cat = await client.createCategory(store1, { name: 'Test' });
-      const obj = await client.createObject(store1, cat, { name: 'Obj' });
+      await client.getCategory(cat.signature.id);
       
-      expect(cat.signature.storeId).toBe('store-1');
-      expect(obj.signature.storeId).toBe('store-1');
+      expect(store1.calls.read).toHaveLength(1);
+      expect(store1.calls.read[0].args[0]).toBe(cat.signature.id);
+    });
+
+    it('tracks list calls during queries', async () => {
+      const cat = await client.createCategory(store1, { name: 'Test' });
+      await cat.getObjects();
       
-      // Retrieve and check
-      const retrieved = await client.getObject(obj.signature.id);
-      expect(retrieved?.signature.storeId).toBe('store-1');
+      expect(store1.calls.list.length).toBeGreaterThan(0);
     });
   });
 
